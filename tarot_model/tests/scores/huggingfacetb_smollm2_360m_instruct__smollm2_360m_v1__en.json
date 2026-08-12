@@ -1,0 +1,43 @@
+{
+  "model": "HuggingFaceTB/SmolLM2-360M-Instruct",
+  "adapter": "adapters/smollm2_360m/v1",
+  "test_file": "tests/test_results_huggingfacetb_smollm2_360m_instruct__v1__20260620_2144.txt",
+  "date": "2026-06-20 21:44",
+  "peak_ram_gb": 0.88,
+  "scores": {
+    "card_accuracy": 4.33,
+    "tone": 4.67,
+    "imagery": 3.67,
+    "coherence": 4.67,
+    "overall": 4.27
+  },
+  "per_test": [
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 3,
+      "coherence": 4,
+      "overall": 3.65,
+      "note": "While starting strong with vivid imagery, the reading quickly devolves into generic metaphors like 'foundations of your existence' and 'old structures', lacking sustained concrete description.",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 5,
+      "tone": 5,
+      "imagery": 4,
+      "coherence": 5,
+      "overall": 4.65,
+      "note": "While images like 'feeding the shadow' are excellent, some other descriptive phrases are good but not consistently rare or striking.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 5,
+      "imagery": 4,
+      "coherence": 5,
+      "overall": 4.5,
+      "note": "The reading offers a clear and deeply resonant arc from pain to the potential for healing, culminating in a strong, guiding closing statement.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

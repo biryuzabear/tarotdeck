@@ -1,0 +1,14 @@
+.env
+venv/
+.DS_Store
+adapters/**/[0-9]*_adapters.safetensors
+fused/
+quantized/
+__pycache__/
+*.pyc
+dataset/train.jsonl
+dataset/valid.jsonl
+tests/test_results_*.txt
+dataset/*/train/
+dataset/*/valid/
+adapters/

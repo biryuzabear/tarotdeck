@@ -1,0 +1,38 @@
+Model:      HuggingFaceTB/SmolLM2-360M-Instruct
+Adapter:    adapters_smollm2_360m
+Date:       2026-06-20 12:55
+Max tokens: 250
+LoRA config (lora_config.yaml):
+  lora_parameters:
+    rank: 16
+    scale: 10.0
+    dropout: 0.1
+============================================================
+
+--- 1-card — Card of the Day ---
+PROMPT:
+What does today have in store for me? Cards: 1. The Tower (upright) [sudden upheaval, chaos, revelation, breakdown, crisis]
+
+RESPONSE:
+Today, The Tower stands before you with its stone walls shaking and its windows shattered. A sudden truth has hit you, a sudden collapse of the old order, revealing a truth that no one knew was hidden. This is a day of great upheaval, where the familiar structures you once knew are crumbling, and a new, more powerful truth is emerging. You stand at the precipice of a significant shift, ready to face the unexpected. A profound revelation has struck you, and you must now navigate this new landscape.
+
+------------------------------------------------------------
+
+--- 2-card — Job Offer ---
+PROMPT:
+Should I take this new job offer? Cards: 1. Eight of Pentacles (upright) [diligence, mastery, skill development, craftsmanship, focus] 2. The Moon (reversed) [repressed fear, confusion lifting, deception revealed, inner clarity, misunderstanding]
+
+RESPONSE:
+The Eight of Pentacles shows the work you are building: steady hands, a plan made from real skill, a craft that can be held in your hands. This is not a dream offer, it is a task you are learning to master. Yet The Moon with its light turned back shows the danger of fear in the room. A hidden truth is being named, and the old fear is not gone, only buried. The danger is not the job itself, but the confusion that makes it look dangerous. You are not powerless here; you are being shown the shape of the truth. The path opens when you stop feeding the shadow and let the moon show the hidden light.
+
+------------------------------------------------------------
+
+--- 3-card — Relationship ---
+PROMPT:
+Will this relationship heal or should I let it go? Cards: 1. Three of Swords (upright) [heartbreak, sorrow, grief, hurt, betrayal] 2. The Star (reversed) [despair, hopelessness, disconnection, faithlessness, lost inspiration] 3. Ace of Cups (upright) [new feelings, love, intuition, creativity, spiritual connection]
+
+RESPONSE:
+The Three of Swords stands as the force in this bond, and it shows the wound: old hurt, a truth that has been kept quiet, a betrayal that still cuts at the heart. This connection has been wounded by silence, pride, and the need to be right. Yet The Star comes with its light turned inward, and it speaks of a deeper disconnection. The heart is not empty, but it is tired of being fed by silence. The Ace of Cups rises as the resolution, and it brings a new feeling, a creative spark, a message from the soul that the bond is not dead, but it needs a fresh cup to drink from. The path is not healed by silence, but by a renewed heart and a clear cup. The wound must be named before the cup can be filled.
+
+------------------------------------------------------------
+

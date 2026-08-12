@@ -1,0 +1,43 @@
+{
+  "model": "Qwen/Qwen3.5-0.8B",
+  "adapter": "adapters/qwen3_5_0.8b/v1",
+  "test_file": "tests/test_results_qwen_qwen3.5_0.8b__v1__20260620_2144.txt",
+  "date": "2026-06-20 21:44",
+  "peak_ram_gb": 1.73,
+  "scores": {
+    "card_accuracy": 4.33,
+    "tone": 4.0,
+    "imagery": 3.67,
+    "coherence": 4.33,
+    "overall": 4.0
+  },
+  "per_test": [
+    {
+      "card_accuracy": 5,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 5,
+      "overall": 4.35,
+      "note": "The reading masterfully conveys the card's meaning through its strong, fateful closing line: 'The ground shakes, and the walls fall away, leaving you to stand on your own terms.'",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 4,
+      "overall": 4.0,
+      "note": "The imagery is consistently strong and concrete, successfully avoiding generic filler.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 3,
+      "coherence": 4,
+      "overall": 3.65,
+      "note": "The reading integrates card meanings well and maintains a strong tone throughout, but the final line's imagery becomes repetitive and loses impact.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

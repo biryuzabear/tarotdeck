@@ -1,0 +1,43 @@
+{
+  "model": "Qwen/Qwen3.5-0.8B",
+  "adapter": "adapters/qwen3_5_0.8b/v2",
+  "test_file": "tests/test_results_qwen_qwen3.5_0.8b__v2__20260620_2144.txt",
+  "date": "2026-06-20 21:44",
+  "peak_ram_gb": 1.73,
+  "scores": {
+    "card_accuracy": 4.67,
+    "tone": 4.33,
+    "imagery": 4.33,
+    "coherence": 4.67,
+    "overall": 4.45
+  },
+  "per_test": [
+    {
+      "card_accuracy": 5,
+      "tone": 5,
+      "imagery": 5,
+      "coherence": 5,
+      "overall": 5.0,
+      "note": "The opening line, 'The Tower rises over your day like a black stone in the sky,' is exceptionally vivid and immediately sets a powerful, ominous tone.",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 4,
+      "overall": 4.0,
+      "note": "The reading skillfully weaves the meanings of both cards, creating a clear narrative arc with a strong, impactful closing line that resolves the tension presented.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 5,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 5,
+      "overall": 4.35,
+      "note": "The reading masterfully integrates the cards into a clear narrative arc, culminating in a powerful and empowering closing line that resolves the initial query.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

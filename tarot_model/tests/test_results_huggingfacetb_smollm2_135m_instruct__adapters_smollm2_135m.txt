@@ -1,0 +1,31 @@
+Model: HuggingFaceTB/SmolLM2-135M-Instruct
+Adapter: adapters
+============================================================
+
+--- 1-card — Card of the Day ---
+PROMPT:
+What does today have in store for me? Cards: 1. The Tower (upright) [sudden upheaval, chaos, revelation, breakdown, crisis]
+
+RESPONSE:
+The Tower stands before you like a house overturned by wind. Today carries a sharp edge, a sudden crack in the old structure, a truth that cracks the old walls. A plan, a message, a truth may come in the form of a sudden change, a sudden release of pressure, or a sudden truth that shakes the ground beneath you. This card shows a day where the old foundations are not as solid as they seemed, and a collapse is near. Yet the force around you is not gone; it is being laid down. You are standing in the light of a new, more powerful truth. The world is not gone, but it is being made to move.
+
+------------------------------------------------------------
+
+--- 2-card — Job Offer ---
+PROMPT:
+Should I take this new job offer? Cards: 1. Eight of Pentacles (upright) [diligence, mastery, skill development, craftsmanship, focus] 2. The Moon (reversed) [repressed fear, confusion lifting, deception revealed, inner clarity, misunderstanding]
+
+RESPONSE:
+The Eight of Pentacles stands before you with a clean table and a steady hand. This is the force to hold to: practice, repair, build, and keep your craft alive. The gain is real work, not endless waiting. You are not meant to be the master now. Your power is in the small, steady task of one carefully made. The Moon, though its veil is dimmed, shows the cost: a quiet truth is being hidden, a false fear is loosening its grip, and the old fear that once fed you is no longer hidden. You are not meant to be the one who still speaks the truth. The offer is real, but it asks for focus, not endless proof. Your power is in the craft, not in the promise of a new job. The door opens when you stop pretending the work is only for the one who can keep the work alive.
+
+------------------------------------------------------------
+
+--- 3-card — Relationship ---
+PROMPT:
+Will this relationship heal or should I let it go? Cards: 1. Three of Swords (upright) [heartbreak, sorrow, grief, hurt, betrayal] 2. The Star (reversed) [despair, hopelessness, disconnection, faithlessness, lost inspiration] 3. Ace of Cups (upright) [new feelings, love, intuition, creativity, spiritual connection]
+
+RESPONSE:
+The Three of Swords shows the hurt wound in this bond: words cut like knives, and grief has made the room feel larger than it was. There is still a wound here, but it is not dead. The Star, turned from faith, shows the cost: a dry well, a missed light, a bond where hope has gone thin. You are not meant to carry this sorrow alone. The Ace of Cups rises as the counsel, the quiet water, the gift that cannot be poured into silence. A new feeling rises, a tender truth, a tender invitation from the heart. Let this cup be chosen, and the wound will not be buried in silence.
+
+------------------------------------------------------------
+

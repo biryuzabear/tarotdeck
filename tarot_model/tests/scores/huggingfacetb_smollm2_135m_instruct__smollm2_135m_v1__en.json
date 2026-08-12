@@ -1,0 +1,42 @@
+{
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "adapter": "adapters/smollm2_135m/v1",
+  "test_file": "tests/test_results_huggingfacetb_smollm2_135m_instruct__adapters_smollm2_135m.txt",
+  "date": "",
+  "scores": {
+    "card_accuracy": 4.0,
+    "tone": 4.67,
+    "imagery": 5.0,
+    "coherence": 4.33,
+    "overall": 4.6
+  },
+  "per_test": [
+    {
+      "card_accuracy": 5,
+      "tone": 5,
+      "imagery": 5,
+      "coherence": 5,
+      "overall": 5,
+      "note": "The reading masterfully uses vivid imagery and a strong fateful tone to interpret The Tower card.",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 2,
+      "tone": 4,
+      "imagery": 5,
+      "coherence": 3,
+      "overall": 3.8,
+      "note": "The imagery is vivid and tone generally mystical, but card interpretations for The Moon reversed are contradictory and the ending is convoluted.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 5,
+      "tone": 5,
+      "imagery": 5,
+      "coherence": 5,
+      "overall": 5,
+      "note": "The reading masterfully integrates card meanings with vivid imagery and a deeply intimate tone, providing a clear and poetic narrative.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "model": "quantized/qwen3_5_0.8b_v2_q4",
+  "adapter": "",
+  "test_file": "tests/test_results_quantized_qwen3_5_0.8b_v2_q4__20260620_2155.txt",
+  "date": "2026-06-20 21:55",
+  "peak_ram_gb": 0.61,
+  "scores": {
+    "card_accuracy": 3.0,
+    "tone": 4.33,
+    "imagery": 4.0,
+    "coherence": 3.67,
+    "overall": 3.88
+  },
+  "per_test": [
+    {
+      "card_accuracy": 4,
+      "tone": 5,
+      "imagery": 4,
+      "coherence": 5,
+      "overall": 4.5,
+      "note": "The line 'You are not meant to walk through this door as it stands before you' is exceptionally impactful and reinforces the fateful tone.",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 4,
+      "overall": 4.0,
+      "note": "The reading excels in its final two sentences, offering a powerful, cohesive image and strong, fateful guidance that integrates both cards.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 1,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 2,
+      "overall": 3.15,
+      "note": "The reading completely ignored The Star (reversed), which critically undermines card accuracy and the overall narrative coherence.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

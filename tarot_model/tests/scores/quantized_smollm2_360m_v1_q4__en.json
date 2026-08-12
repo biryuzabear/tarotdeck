@@ -1,0 +1,43 @@
+{
+  "model": "quantized/smollm2_360m_v1_q4",
+  "adapter": "",
+  "test_file": "tests/test_results_quantized_smollm2_360m_v1_q4__20260620_2155.txt",
+  "date": "2026-06-20 21:55",
+  "peak_ram_gb": 0.37,
+  "scores": {
+    "card_accuracy": 4.0,
+    "tone": 3.67,
+    "imagery": 3.0,
+    "coherence": 4.0,
+    "overall": 3.55
+  },
+  "per_test": [
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 4,
+      "overall": 4.0,
+      "note": "The closing line, 'It is the moment when the old roof cracks so that the future can begin to take shape,' is particularly striking and provides an evocative reframe of the card's challenge.",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 3,
+      "imagery": 2,
+      "coherence": 4,
+      "overall": 3.0,
+      "note": "The reading correctly interprets both card meanings, especially the reversed Moon, and maintains good coherence; however, it suffers from a significant lack of vivid, concrete imagery, relying mostly on abstract concepts.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 3,
+      "coherence": 4,
+      "overall": 3.65,
+      "note": "While the reading offers a strong narrative and tone, the descriptions for the Ace of Cups lean more abstract than vivid.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

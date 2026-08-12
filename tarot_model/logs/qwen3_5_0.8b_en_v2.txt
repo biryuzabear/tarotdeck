@@ -1,0 +1,22 @@
+model=Qwen/Qwen3.5-0.8B
+adapter=adapters/qwen3_5_0.8b/v2
+iters=560 (5 epochs × 1800 examples ÷ effective batch 16)
+batch=4 accum=4 effective_batch=16
+lr=2e-05 max_seq=512 grad_checkpoint=True
+lora_config=lora_config.yaml val_batches=10 steps_per_eval=50
+cmd=/Users/vladimirfedrochenko/myprojects/tarot_model/venv/bin/python -m mlx_lm.lora --model Qwen/Qwen3.5-0.8B --train --data dataset --iters 560 --batch-size 4 --learning-rate 2e-05 --adapter-path adapters/qwen3_5_0.8b/v2 --val-batches 10 --steps-per-eval 50 --config lora_config.yaml --max-seq-length 512 --grad-accumulation-steps 4 --grad-checkpoint
+============================================================
+Iter 1: Val loss 3.285, Val took 4.011s
+Iter 50: Val loss 2.155, Val took 3.792s
+Iter 100: Val loss 1.961, Val took 4.124s
+Iter 150: Val loss 1.801, Val took 3.844s
+Iter 200: Val loss 1.696, Val took 3.920s
+Iter 250: Val loss 1.688, Val took 3.757s
+Iter 300: Val loss 1.597, Val took 4.043s
+Iter 350: Val loss 1.574, Val took 3.916s
+Iter 400: Val loss 1.570, Val took 4.036s
+Iter 450: Val loss 1.567, Val took 3.886s
+Iter 500: Val loss 1.524, Val took 4.007s
+Iter 550: Val loss 1.541, Val took 4.054s
+Iter 560: Val loss 1.579, Val took 3.803s
+Peak memory: 12.427 GB

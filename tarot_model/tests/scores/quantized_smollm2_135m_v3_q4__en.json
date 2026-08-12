@@ -1,0 +1,43 @@
+{
+  "model": "quantized/smollm2_135m_v3_q4",
+  "adapter": "",
+  "test_file": "tests/test_results_quantized_smollm2_135m_v3_q4__20260620_2154.txt",
+  "date": "2026-06-20 21:54",
+  "peak_ram_gb": 0.19,
+  "scores": {
+    "card_accuracy": 3.67,
+    "tone": 3.33,
+    "imagery": 2.0,
+    "coherence": 2.0,
+    "overall": 2.65
+  },
+  "per_test": [
+    {
+      "card_accuracy": 4,
+      "tone": 3,
+      "imagery": 2,
+      "coherence": 3,
+      "overall": 2.8,
+      "note": "The reading heavily reuses phrases and concepts like 'collapse,' 'truth,' and 'shedding,' which reduces the vividness of the imagery and the overall flow of the prose.",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 4,
+      "imagery": 2,
+      "coherence": 2,
+      "overall": 2.9,
+      "note": "The reading is severely undermined by excessive repetition of phrases like 'open work' and 'hidden work' towards the end, culminating in an abrupt, unfinished sentence.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 3,
+      "tone": 3,
+      "imagery": 2,
+      "coherence": 1,
+      "overall": 2.25,
+      "note": "The reading starts strong with evocative language but devolves into extreme repetition and contradictory statements in the final card's interpretation, making it incoherent and confusing.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

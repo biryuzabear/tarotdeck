@@ -1,0 +1,18 @@
+model=HuggingFaceTB/SmolLM2-135M-Instruct
+adapter=adapters/smollm2_135m/v3
+iters=1120 (10 epochs × 1800 examples ÷ batch 16)
+batch=16 lr=5e-05
+============================================================
+Iter 1: Val loss 3.852, Val took 3.407s
+Iter 100: Val loss 2.063, Val took 3.223s
+Iter 200: Val loss 1.848, Val took 3.304s
+Iter 300: Val loss 1.760, Val took 3.203s
+Iter 400: Val loss 1.723, Val took 4.098s
+Iter 500: Val loss 1.699, Val took 3.836s
+Iter 600: Val loss 1.671, Val took 3.445s
+Iter 700: Val loss 1.665, Val took 3.339s
+Iter 800: Val loss 1.655, Val took 3.349s
+Iter 900: Val loss 1.641, Val took 3.200s
+Iter 1000: Val loss 1.623, Val took 3.221s
+Iter 1100: Val loss 1.623, Val took 3.225s
+Iter 1120: Val loss 1.618, Val took 3.290s

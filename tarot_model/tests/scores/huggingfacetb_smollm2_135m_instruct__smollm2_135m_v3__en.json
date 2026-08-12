@@ -1,0 +1,43 @@
+{
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "adapter": "adapters/smollm2_135m/v3",
+  "test_file": "tests/test_results_huggingfacetb_smollm2_135m_instruct__v3__20260620_2144.txt",
+  "date": "2026-06-20 21:44",
+  "peak_ram_gb": 0.37,
+  "scores": {
+    "card_accuracy": 4.33,
+    "tone": 3.33,
+    "imagery": 2.67,
+    "coherence": 3.67,
+    "overall": 3.32
+  },
+  "per_test": [
+    {
+      "card_accuracy": 4,
+      "tone": 3,
+      "imagery": 2,
+      "coherence": 3,
+      "overall": 2.8,
+      "note": "The repetition of 'The air around you is charged with energy, and the air around you is charged with power' is a glaring flaw that drags down imagery and coherence.",
+      "label": "1-card \u2014 Card of the Day"
+    },
+    {
+      "card_accuracy": 4,
+      "tone": 3,
+      "imagery": 2,
+      "coherence": 3,
+      "overall": 2.8,
+      "note": "Heavy repetition of 'the craft' and similar phrases significantly detracts from the imagery and overall flow.",
+      "label": "2-card \u2014 Job Offer"
+    },
+    {
+      "card_accuracy": 5,
+      "tone": 4,
+      "imagery": 4,
+      "coherence": 5,
+      "overall": 4.35,
+      "note": "The powerful closing line masterfully integrates the initial wound and the path to healing, offering a cohesive and impactful arc.",
+      "label": "3-card \u2014 Relationship"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+model=Qwen/Qwen3.5-0.8B
+adapter=adapters/qwen3_5_0.8b/v1
+iters=2250 (5 epochs × 1800 examples ÷ batch 4)
+batch=4 lr=5e-05
+============================================================
+Iter 1: Val loss 3.285, Val took 3.973s
+Iter 100: Val loss 1.817, Val took 3.736s
+Iter 200: Val loss 1.616, Val took 7.127s
+Iter 300: Val loss 1.533, Val took 6.757s
+Iter 400: Val loss 1.466, Val took 6.781s
+Iter 500: Val loss 1.528, Val took 7.034s
+Iter 600: Val loss 1.538, Val took 5.961s
+Iter 700: Val loss 1.483, Val took 3.811s
+Iter 800: Val loss 1.503, Val took 6.758s
+Iter 900: Val loss 1.485, Val took 6.986s
+Iter 1000: Val loss 1.673, Val took 6.682s
+Iter 1100: Val loss 1.593, Val took 6.207s
+Iter 1200: Val loss 1.575, Val took 3.719s
+Iter 1300: Val loss 1.517, Val took 6.863s
+Iter 1400: Val loss 1.705, Val took 6.458s
+Iter 1500: Val loss 1.809, Val took 6.725s
+Iter 1600: Val loss 1.764, Val took 6.758s
+Iter 1700: Val loss 1.736, Val took 5.697s
+Iter 1800: Val loss 1.698, Val took 6.032s
+Iter 1900: Val loss 1.850, Val took 6.897s
+Iter 2000: Val loss 1.889, Val took 6.664s
+Iter 2100: Val loss 1.782, Val took 7.005s
+Iter 2200: Val loss 1.838, Val took 5.986s
+Iter 2250: Val loss 1.789, Val took 3.880s

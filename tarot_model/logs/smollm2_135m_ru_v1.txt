@@ -1,0 +1,18 @@
+model=HuggingFaceTB/SmolLM2-135M-Instruct
+lang=ru
+adapter=adapters/smollm2_135m/ru/v1
+iters=165 (5 epochs × 540 examples ÷ effective batch 16)
+batch=16 accum=1 effective_batch=16
+lr=0.0001 max_seq=512 grad_checkpoint=False
+lora_config=lora_config.yaml val_batches=10 steps_per_eval=25
+cmd=/Users/vladimirfedrochenko/myprojects/tarot_model/venv/bin/python -m mlx_lm.lora --model HuggingFaceTB/SmolLM2-135M-Instruct --train --data dataset/ru --iters 165 --batch-size 16 --learning-rate 0.0001 --adapter-path adapters/smollm2_135m/ru/v1 --val-batches 10 --steps-per-eval 25 --config lora_config.yaml --max-seq-length 512 --grad-accumulation-steps 1 --save-every 25
+============================================================
+Iter 1: Val loss 2.173, Val took 3.576s
+Iter 25: Val loss 1.298, Val took 2.345s
+Iter 50: Val loss 1.141, Val took 2.298s
+Iter 75: Val loss 1.055, Val took 2.357s
+Iter 100: Val loss 1.003, Val took 2.211s
+Iter 125: Val loss 0.963, Val took 2.223s
+Iter 150: Val loss 0.925, Val took 2.215s
+Iter 165: Val loss 0.908, Val took 2.201s
+Peak memory: 10.554 GB
