@@ -1,6 +1,8 @@
-# Tarot Model — Claude Context
+# Tarot Model
 
-## Project Goal
+Training pipeline for the cyberdeck's reading model. Code lives in `tarot_model/`.
+
+## Goal
 Fine-tune small LLMs on tarot knowledge and deploy universally (Mac, Pi, mobile).
 
 ## Target Model
@@ -91,16 +93,7 @@ python3 -c "... 90/10 split ..."
 - Raspberry Pi 2GB — llama.cpp (Q4_K_M, ~900MB RAM)
 - Android/iOS — MLC-LLM or llama.cpp bindings
 
-## Voice Input Plan
-- Whisper `base` model — 290MB RAM, 99 languages, ~10s for 5s audio on Pi
-- Flow: speak → Whisper → tarot model → response
-
 ## Multilingual Plan
 - Priority: EN (done), RU (partial), DE, FR, ES, IT, PT, PL
 - Each language: separate LoRA adapter on same Qwen3.5-0.8B base
 - Other languages: rely on Qwen3.5-0.8B multilingual pretraining
-
-## Conventions
-- Track progress in `PROGRESS.md`
-- Do not start implementing unless explicitly asked
-- Never read or write `.env`

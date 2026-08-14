@@ -1,0 +1,16 @@
+.env
+.DS_Store
+venv/
+__pycache__/
+*.pyc
+
+*.gguf
+*.safetensors
+*.bin
+*.pt
+*.wav
+*.mp3
+*.stl
+*.step
+*.f3d
+*.FCStd
