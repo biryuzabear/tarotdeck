@@ -2,21 +2,32 @@
 
 ## Done
 - Tarot LLM fine-tuning pipeline (`tarot_model/`) — EN and RU adapters on Qwen3.5-0.8B
-- Parts identified and written up in `hardware/BOM.md` + `hardware/parts/`
-- Enclosure constraint recorded: 76 × 41 × 126 mm (`hardware/ENCLOSURE.md`)
+- All parts identified and written up in `hardware/BOM.md` + `hardware/parts/`
+- Enclosure envelope and internal stack: `hardware/ENCLOSURE.md`
+- Power budget and its limits: `hardware/POWER.md`
+- Interaction and face layout: `docs/UI.md`
 
-## Now
-Next question is **what the device does and how it's used** — which indicators
-and which controls. Placement, wiring and pin maps come after that, not before.
-Not every part on hand has to end up in the build; the gyro may well not.
+## Dropped
+- LED ring (40 mm, fits nowhere) · OLED (too small to earn its space) ·
+  gyroscope (no use that isn't done better by something else)
 
-Physical envelope is settled: the sandwich is 36.8 mm of the 41 mm, and the area
-outside the Pi's footprint is free for controls.
+## Unproven — nothing here has run on real hardware
+Ordered by how much it could invalidate:
 
-## To discuss
-Not started. Each gets its own doc when we actually talk about it.
-- Operating system
-- UI
-- The programs / what runs on the device
-- Running different models, possibly in parallel
-- Functionality — what the device actually does
+1. **Inference time.** Everything about the interaction assumes "it thinks for a
+   moment, then answers." If a reading takes two minutes on the Pi, the design
+   changes shape.
+2. **Both models in 2 GB.** LLM ~900 MB + Whisper ~290 MB, plus OS. Fits on
+   paper. Untested.
+3. **The e-paper as a usable UI.** Partial refresh exists in C but not in the
+   Python driver. Until text renders at a known speed, the menu is theory.
+4. **Current draw under real load**, measured with an inline USB-C meter.
+5. **The chamfer.** Wall thickness, diffusion, and bleed between LEDs — one small
+   test print answers all three.
+
+## Still open in the design
+- Where the dictation control goes — the front face has no room left for it, so
+  bottom edge or back
+- How the transcribed question gets confirmed
+- One lit chamfer or both
+- Gear size, which collides with where the LED column starts

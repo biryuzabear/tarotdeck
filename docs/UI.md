@@ -70,22 +70,41 @@ The top of the device is noticeably heavier than the bottom, which is wrong for
 something you hold. The only mass that can move is the **battery** — it's on a
 magnet, so it can be shifted down.
 
-## LED strip beside the screen
+## Lit chamfer
 The round LEDs come already mounted on board, **10 × 10 mm each**. Six to eight
-of them run down the left of the screen, alongside the menu, marking which item
-is selected — or signalling state generally.
+of them run down the side of the screen, alongside the menu, marking which item
+is selected.
 
 Eight at 10 mm is 80 mm, and the screen's active area is 81.12 mm tall. They line
-up with the screen almost exactly — one LED per menu row.
+up almost exactly — one LED per menu row.
 
-**Geometric conflict, unresolved.** The screen is to be centred across the width,
-which leaves ~9 mm each side at driver-board level — and that's before wall
-thickness. With 2 mm walls it's ~7 mm. A 10 mm board doesn't fit there.
+**Not holes — a chamfer.** The case edge is cut away at 45° along the length of
+the screen, and the light comes out through that bevel. Visible head-on and from
+the side both. One lit edge rather than a row of dots — a part of the object, not
+a perforation.
 
-It fits if the whole block is pushed to one side: 76 − 58 = 18 mm in one strip,
-~14 mm after walls. But then the screen is off-centre.
+It also stops reading as asymmetry: a lit bevel is edge treatment, not something
+sitting on the face.
 
-So: centred screen, or a strip down one side. Not both.
+**Tilting the board 45° is what makes it fit.** A 10 mm board tilted 45° projects
+10 / √2 = **7.07 mm** of width. With 1.5 mm walls the inner width is 73 mm, the
+block takes 58, leaving 7.5 mm each side — so the screen can stay **centred**,
+and both edges can be lit. Symmetry recovered.
+
+At 2 mm walls each side is exactly 7.0 mm, which misses by 0.07 mm. So this
+depends on 1.5 mm walls.
+
+Still to check: the board's real thickness with its connector and wiring soldered
+on, which adds to the 7.07.
+
+## Two things to get right
+**Diffusion.** A bare WS2812 behind a hole is a harsh point of light. Leave the
+chamfer as a thin 0.8–1 mm wall rather than cutting through — printed PLA at that
+thickness diffuses well.
+
+**Bleed.** The LEDs sit 10 mm apart with wide beams. Without a solid rib between
+each pair, running to the wall, the spots merge into a smear — which destroys the
+whole point, since what's wanted is one crisp light against one menu row.
 
 ## Indication
 The **LED strip** carries transient state; the e-paper is too slow for anything

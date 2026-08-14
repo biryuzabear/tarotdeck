@@ -13,9 +13,17 @@ suits the retro aesthetic better.
 | | |
 |---|---|
 | Type | passive |
+| Count | **one for now** — three would have been three voices, but also ~600 mA on a 3 A budget |
 | Drive | PWM, 50 % duty; frequency sets pitch |
-| Useful range | piezo elements resonate ~2–4 kHz, usable ~2–6 kHz — loudest at resonance, thin and quiet outside it |
+| Useful range | piezo elements resonate ~2–4 kHz; magnetic go lower, ~1–3 kHz |
 | Model | ? |
+
+One buzzer = one voice at a time. Melodies yes, chords no. Adding voices later
+costs a hardware PWM channel each — GPIO 12, 13 and 19 are free, 18 is taken by
+the e-Paper.
+
+Candidate seen but not bought: 12 × 8.5 mm, **16 Ω** — that resistance means
+magnetic, not piezo, so ~200 mA at 3.3 V and a transistor is mandatory.
 
 ## Direct GPIO or transistor?
 Depends which kind it is:
