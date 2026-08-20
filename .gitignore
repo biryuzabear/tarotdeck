@@ -14,3 +14,5 @@ __pycache__/
 *.step
 *.f3d
 *.FCStd
+emulator/.venv/
+emulator/fonts/

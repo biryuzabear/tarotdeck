@@ -2,16 +2,13 @@
 
 Voice input.
 
-**The model number doesn't fully resolve.** No SunFounder listing uses "M-305".
-Two candidates:
+**Identified: SunFounder USB 2.0 Mini Microphone**, SKU `CN0029`, ASIN B01KLRBHGM —
+SunFounder's only mini USB mic. https://www.sunfounder.com/products/mini-usb-microphone
 
-1. **SunFounder USB 2.0 Mini Microphone**, SKU `CN0029`, ASIN B01KLRBHGM —
-   SunFounder's only mini USB mic. https://www.sunfounder.com/products/mini-usb-microphone
-2. **MI-305 Mini Microphone Dongle** — a widely rebadged generic USB dongle
-   (SparkFun, MIDTeks, and others) that looks essentially identical. If the unit
-   is physically labelled M-305/MI-305 it is probably this, not SunFounder-branded.
-
-Likely the same OEM part either way.
+Confirmed by the owner. The unit's "M-305" marking does not appear in any
+SunFounder listing; the visually identical MI-305 Mini Microphone Dongle,
+rebadged by SparkFun, MIDTeks and others, is almost certainly the same OEM
+part sold unbranded.
 
 ## Specs (for the SunFounder CN0029)
 | | |

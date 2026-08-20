@@ -5,8 +5,7 @@ Screen on top, controls below or on the side.
 
 1. **Switch on.** A physical button or switch, placed where the Pi's own power
    button is.
-2. **Pick a program.** At first there may be only one — the tarot reading — but
-   the intent is a choice of programs.
+2. **Pick a program.** Two of them — see below.
 3. **Splash screen** for the chosen program.
 4. **Pick a spread:** one, two, or three cards, each with a hint about what it's
    for (one card = card of the day, or a simple question; two and three still to
@@ -17,6 +16,28 @@ Screen on top, controls below or on the side.
    Not an animation, just sequential reveal. The buzzer plays something.
 7. **The reading appears.**
 8. Then another spread can be chosen.
+
+## The two programs
+The choice at power-on is between a **local** reading and a **networked** one.
+This is the point of the device having a menu at all.
+
+|  | Local | Networked |
+|---|---|---|
+| Wi-Fi | off | on |
+| Loads | the tarot model, and Whisper | Whisper only |
+| Speed | slow — it thinks | close to instant |
+
+The local one is the device as originally conceived: nothing leaves it. The
+networked one hands the reading to an API — Codex, or whatever is cheap — and
+answers immediately.
+
+Whisper stays on the device in both, most likely: transcription should be fast
+enough locally that sending audio away buys nothing. It could go over the network
+too, but there's no reason yet.
+
+Open: how the two feel different beyond the wait. If one is instant and the other
+takes half a minute, the slow one had better be the one that feels like the real
+thing.
 
 ## Controls, as imagined
 Selection wants a **wheel on the side** — like a volume knob, but clicking:
@@ -107,20 +128,35 @@ each pair, running to the wall, the spots merge into a smear — which destroys 
 whole point, since what's wanted is one crisp light against one menu row.
 
 ## Indication
-The **LED strip** carries transient state; the e-paper is too slow for anything
-that changes per click and shouldn't be repainted for it.
+The **LED strip** carries transient state. Even at 0.3 s the e-paper is too slow
+for something that changes on every click of the encoder.
 
 Scrolling costs no repaint at all: the e-paper draws the menu once and the LEDs
-move the selection along it.
+move the selection along it. This also spends no ghosting budget.
 
 **The OLED is dropped** — it fits between the gears, but 27 × 27 mm of module
 buys only a running line of text.
 
-Open, as a result: how the transcribed question gets confirmed.
-- one extra 3 s repaint showing the question, tick right to accept — catches
-  mistakes before the model runs
-- or no repaint at all, the question printed above the reading on the same page —
-  quieter, but a misheard question costs the whole wait
+**The 3 s figure is only for four-grey refreshes.** Mono refreshes run ~0.3 s, and
+`display_1Gray` in the Waveshare driver already does them — nothing to write. Text
+is black on white anyway, so mono costs us nothing.
+
+That changes what the screen can do. Within a state it can carry a **live region**
+updated at 0.3 s while the rest stays put:
+
+- **The reading can print as it generates**, line by line, instead of 17 seconds of
+  nothing followed by one repaint.
+- **The transcribed question gets shown** for confirmation. This used to be a
+  dilemma — spend 3 s on it or risk a misheard question costing the whole wait.
+  At 0.3 s there's no dilemma.
+
+The state machine still holds: each screen is drawn once on entry. But a state may
+own a region that keeps moving.
+
+**The cost is ghosting.** A2 is the most ghost-prone waveform, and the panel is
+damaged permanently if it never gets a clean full refresh. So the code carries a
+counter: N fast updates, then one full. Vendor guidance says N ≤ 5; whether that's
+real or cautious is worth measuring.
 
 ## Face geometry
 **Width is set by the driver board, not the panel.** The board is 58 mm and sits
@@ -142,7 +178,66 @@ Consequences:
 The ~29 mm end is the only real estate for the microphone grille and controls,
 and in the upside-down orientation it lands at the top, where you'd speak into it.
 
+## Menus, as settled
+No program choice at power-on. The first menu is the spread — one, two or three
+cards — plus **Settings**, which holds the sound switch and the offline/online
+mode. Choosing a spread goes straight to hold-and-speak.
+
+The device is held **portrait, always** — there is no landscape mode.
+
+**The free strip moves to the bottom.** The driver board is 96.5 mm in a 126 mm
+body, and that 29.5 mm of slack now sits under the glass rather than above it,
+giving the dictation pad ~21 mm of face. The board cannot go higher than 16 mm
+from the top: the encoder body is ~12 mm across, the board is 58 mm wide leaving
+only 9 mm of corner outside it, so the gears have to sit *above* the board and
+that is what sets the floor.
+
+**Two thirds of each lens is visible.** The chamfer is cut at 45 degrees, so the
+outer third of the LED disappears into the bevel and what reads from the front is
+a flat-sided crescent, cut on the outside, facing the screen.
+
+The screen splits in two: the **top informs**, the **bottom chooses**. Menu rows
+live in the lower ~44 % of the glass, and the LEDs are level with them.
+
+Both chamfers light together: one menu row is two LEDs, mirrored. **Three rows,
+six LEDs on the chain** — a menu never needs more than three items, so one lit
+row is one menu line, and the rows are big enough to read at arm's length.
+
+Three items also means Settings has no slot in the list. It is reached by ticking
+the left gear back from the top menu, where there is otherwise nowhere to go.
+
+The buzzer clicks on every scroll step, in step with the light.
+
+## The gravure ornament
+The visual language of biryuzabear.github.io and the bot cards. **Card faces are
+not generated** — real art will be supplied. The generator's vocabulary dresses
+the informing half of the menu instead.
+
+What the reference actually does, and what the port reproduces:
+
+- **One hero sigil, open rather than woven.** Outer circle, a second circle well
+  inside it, an inscribed diamond with its two diagonals, and at the centre a
+  star-cog ringed by bolt holes. Few elements, far apart.
+- **Traces hug the frame.** Orthogonal runs in bundles of two or three, cornered
+  at 45 degrees, ending in a small ring via. They travel down the margins and
+  across the corners; they never radiate out of the sigil.
+- **Depth by layer.** Background sigils and the long runs sit one grey lighter
+  than the hero — which is how the reference uses opacity, and it maps exactly
+  onto the panel's four levels: paper, faint, ornament, text.
+
+Two rules keep it legible on glass rather than in a browser:
+
+- **Nothing thinner or closer than the panel can separate.** Every radius is
+  checked against the ones already used, a polygon is refused when its edge would
+  fall below 12 px, dots have a floor. At 0.169 mm a pixel, strokes closer than
+  7 px read as one smudge. Elements are dropped, never squeezed.
+- **No antialiasing.** Drawn at final size with one-pixel strokes. A resampled
+  line lands as mid-grey on a four-level panel, which was exactly the mush the
+  first attempt produced.
+
 ## Open
 - What two- and three-card spreads are *for*
+- Where one, two and three cards sit on a 280 x 480 screen
+- Where the reading text goes once the cards are on screen
 - How many controls this actually needs
 - How the elements are laid out physically

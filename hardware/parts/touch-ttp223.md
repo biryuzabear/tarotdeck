@@ -39,7 +39,24 @@ The `Cs` capacitor runs from the sense pad to ground, 0–50 pF. **No capacitor 
 maximum sensitivity**; adding capacitance only reduces it. Some boards ship with
 it populated — removing it is what took one user from 3 mm to 7 mm.
 
-A 2 mm wall is comfortably inside range.
+A 2 mm wall is comfortably inside range — on paper.
+
+### The test to run
+Print a set of plain plates and see what the sensor actually reads through. Not a
+question to settle from datasheets: everything published is other people's
+material at other people's print settings.
+
+- A ladder of thicknesses — 1, 1.5, 2, 2.5, 3, 4 mm
+- Printed in **the filament and the settings the case will use**, solid, since
+  infill voids change what the field sees
+- Each plate held flat against the pad, then touched with a normal fingertip
+
+What comes out of it: the thickest wall that still triggers reliably, and whether
+2 mm has margin or is sitting on the edge. If it's marginal, removing `Cs` is the
+next move before redesigning anything.
+
+Worth doing on the same print as the chamfer test — both are small coupons and
+both gate wall thickness.
 
 ## Two behaviours that matter here
 **A held touch does not stay asserted.** The chip auto-recalibrates: normally
