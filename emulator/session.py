@@ -18,6 +18,7 @@ import threading
 import time
 
 import cardface
+import ears as ears_module
 import layout
 import menu
 import readers
@@ -70,14 +71,14 @@ LISTEN_CAP = 10.0
 
 
 class Session:
-    def __init__(self, glass, strip, buzzer, reader=None, deck=None, transcribe=None, reader_for=None):
+    def __init__(self, glass, strip, buzzer, reader=None, deck=None, ears=None, reader_for=None):
         self.glass = glass
         self.strip = strip
         self.buzzer = buzzer
         self.reader_for = reader_for or (lambda mode, deck, language: reader)
         self.reader = reader
         self.deck = deck or tarot.Deck()
-        self.transcribe = transcribe or (lambda seconds: "what should i know about the week ahead")
+        self.ears = ears or ears_module.TypedEars()
 
         self.events = queue.Queue()
         self.state = None
@@ -199,18 +200,28 @@ class Session:
     def _enter_listen(self):
         self.status = "listening"
         self.listen_started = time.monotonic()
+        try:
+            self.ears.start()
+        except ears_module.EarsError as exc:
+            self.enter("trouble", message=str(exc))
+            return
         self.glass.mono_partial(screens.listening(0.0, LISTEN_CAP))
         self.strip.filling(0.0)
 
     def _enter_hearing(self):
         self.status = "hearing"
-        took = time.monotonic() - self.listen_started
+        take = self.ears.stop()
         self.strip.travelling(0)
 
         def job(cancel):
-            time.sleep(min(1.2, max(0.4, took * 0.25)))
+            try:
+                text = self.ears.transcribe(take)
+            except ears_module.EarsError as exc:
+                if not cancel.is_set():
+                    self.post(FAILED, str(exc))
+                return
             if not cancel.is_set():
-                self.post(HEARD, self.transcribe(took))
+                self.post(HEARD, text)
 
         self._spawn(job)
 
@@ -386,6 +397,9 @@ class Session:
         self.strip.position(self.page, of=len(self.pages))
 
     def _on_failed(self, message):
+        if self.state == "hearing":
+            self.enter("trouble", message=message or "nothing was heard")
+            return
         self.enter("trouble", message=message or "the reading stopped")
 
     # -------------------------------------------------------------------- pages
@@ -429,7 +443,7 @@ class Session:
         if self.state == "listen":
             elapsed = time.monotonic() - self.listen_started
             self.strip.filling(elapsed / LISTEN_CAP)
-            if elapsed >= LISTEN_CAP:
+            if elapsed >= LISTEN_CAP or self.ears.silent_for() >= ears_module.SILENCE_HOLD:
                 self.enter("hearing")
         elif self.state in ("hearing", "hold"):
             self.travel += 1

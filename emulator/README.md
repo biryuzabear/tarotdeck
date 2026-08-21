@@ -56,6 +56,21 @@ TAROTDECK_LOCAL_MODEL=smollm2:1.7b ./.venv/bin/python run.py
 OPENAI_API_KEY=... TAROTDECK_CLOUD_MODEL=gpt-4o-mini ./.venv/bin/python run.py
 ```
 
+## Voice
+
+With `sounddevice` and `mlx-whisper` installed the pad opens the real microphone and
+Whisper transcribes the take; without them, or with `TAROTDECK_TYPED=1`, a fixed
+question stands in. The info pane says which. Whisper is `base.en`, matching what
+docs/RUNTIME.md picked for the Pi, and the weights are fetched once on first run.
+
+macOS will ask for microphone access the first time, and until it is granted the
+stream returns silence rather than an error — which the deck reports as "nothing was
+said" rather than inventing a question.
+
+The pad is push-to-start, push-to-stop, not hold: the TTP223 drops a held touch
+after ten to fifteen seconds. A take also ends itself after 1.6 s of quiet, or at
+the ten-second cap.
+
 The mode switch in Settings chooses which is asked. Nothing is chosen until the
 cards are drawn, and if the endpoint is unreachable the deck falls back to the
 scripted reader and says so in the info pane rather than pretending.

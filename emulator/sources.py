@@ -30,6 +30,7 @@ CLOUD_MODEL = os.environ.get("TAROTDECK_CLOUD_MODEL", "gpt-4o-mini")
 CLOUD_KEY_ENV = "OPENAI_API_KEY"
 
 SCRIPTED_RATE = float(os.environ.get("TAROTDECK_SCRIPTED_RATE", "12"))
+WHISPER_MODEL = os.environ.get("TAROTDECK_WHISPER", "mlx-community/whisper-base.en-mlx")
 
 
 def system_prompt():
@@ -92,6 +93,24 @@ def cloud():
         system_prompt=system_prompt(),
         name=f"cloud {CLOUD_MODEL}",
     )
+
+
+def ears():
+    """A real microphone if this machine has one and Whisper is installed.
+
+    Falls back to a typed question, and says which it got — a silent fallback
+    would let a microphone the OS has muted look like a microphone that works.
+    """
+    import ears as ears_module
+
+    if os.environ.get("TAROTDECK_TYPED"):
+        return ears_module.TypedEars()
+    try:
+        import mlx_whisper  # noqa: F401
+        import sounddevice  # noqa: F401
+    except ImportError:
+        return ears_module.TypedEars()
+    return ears_module.WhisperEars(model=WHISPER_MODEL)
 
 
 def for_mode(mode, deck=None, language="en"):

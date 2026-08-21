@@ -43,7 +43,7 @@ def main():
     strip = Strip()
     window = panel.Window(strip)
     glass = Glass(driver.EPD(), fake_epdconfig)
-    session = Session(glass, strip, Buzzer(), reader_for=sources.for_mode)
+    session = Session(glass, strip, Buzzer(), ears=sources.ears(), reader_for=sources.for_mode)
 
     import threading
 
@@ -103,6 +103,7 @@ def _status(session, glass):
         f"{session.state}  —  {session.status}",
         f"{session.mode}/{session.language}   spread {session.spread}   partials left {glass.partials_left()}",
         f"reader: {session.reader.name if session.reader else '(chosen at draw)'}",
+        f"ears: {session.ears.name}",
     ]
 
 
