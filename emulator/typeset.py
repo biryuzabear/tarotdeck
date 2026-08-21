@@ -99,13 +99,17 @@ class LineStream:
     never change again.
     """
 
-    def __init__(self, cols=COLS, sentences_per_paragraph=2):
+    def __init__(self, cols=COLS, sentences_per_paragraph=2, cards=()):
         self.cols = cols
         self.buffer = ""
         self.current = ""
         self.lines = []
         self.sentences_per_paragraph = sentences_per_paragraph
         self.sentences = 0
+        self.cards = [name.lower() for name, _ in cards]
+        self.card = 0
+        self.line_card = []
+        self.seen = ""
 
     def feed(self, chunk):
         """Returns the lines completed by this chunk, in order."""
@@ -124,13 +128,33 @@ class LineStream:
                 else:
                     finished.extend(self._close(self.current))
                     self.current = word
-                if word.endswith((".", "!", "?")):
+                turned = self._advance_card(word)
+                if word.endswith((".", "!", "?")) or turned:
                     self.sentences += 1
-                    if self.sentences >= self.sentences_per_paragraph:
+                    if turned or self.sentences >= self.sentences_per_paragraph:
                         self.sentences = 0
                         finished.extend(self._close(self.current, paragraph=True))
                         self.current = ""
         return finished
+
+    def _advance_card(self, word):
+        """Follow which card the text is talking about.
+
+        The readings are built card by card: in the corpus every three-card answer
+        names all three, 99 % of them in the order they were dealt, at roughly the
+        thirds of the text. So the next card's name arriving is the signal that its
+        part has begun, and the plate that belongs to the words being read can come
+        to the front of the cascade.
+        """
+        if self.card + 1 >= len(self.cards):
+            return False
+        self.seen = (self.seen + " " + word)[-80:]
+        nxt = self.cards[self.card + 1]
+        if nxt in self.seen.lower():
+            self.card += 1
+            self.seen = ""
+            return True
+        return False
 
     def _close(self, line, paragraph=False):
         """Emit a finished line, and a blank one when a paragraph has had its say.
@@ -145,9 +169,11 @@ class LineStream:
             return []
         out = [line]
         self.lines.append(line)
+        self.line_card.append(self.card)
         if paragraph:
             out.append("")
             self.lines.append("")
+            self.line_card.append(self.card)
         return out
 
     def flush(self):
@@ -165,6 +191,7 @@ class LineStream:
         if tail:
             finished.append(tail)
             self.lines.append(tail)
+            self.line_card.append(self.card)
         self.buffer = ""
         self.current = ""
         return finished

@@ -37,12 +37,9 @@ alone, and a chalice too small for a foot keeps its bowl.
 The cog that used to sit at the centre of everything is gone. It was the same on
 every card, and being the largest thing on the plate it was all anyone saw.
 
-**A reversed card turns its composition, never its marks.** Rotating the finished
-plate by 180 degrees was the obvious way to show a reversal and it was wrong: the
-four elemental triangles map onto each other under that rotation, so a reversed
-Swords read as Pentacles and a reversed Cups as Wands. The turn is applied to the
-layout — where the marks sit — while each mark is drawn the right way up, so the
-card is visibly turned and its suit still says what it is.
+**There are no reversed cards.** Every card is drawn upright. The `turned`
+arguments are gone rather than defaulted, so nothing can quietly ask for a
+reversal that no longer exists.
 """
 
 import math
@@ -155,10 +152,10 @@ def _coin(d, cx, cy, r, width):
     _stroke(d, order, INK, width)
 
 
-def _ring_positions(count, cx, cy, radius, turned=False):
+def _ring_positions(count, cx, cy, radius):
     if count == 1:
         return [(cx, cy)]
-    start = math.pi / 2 if turned else -math.pi / 2
+    start = -math.pi / 2
     return [
         (cx + radius * math.cos(start + 2 * math.pi * k / count),
          cy + radius * math.sin(start + 2 * math.pi * k / count))
@@ -180,13 +177,13 @@ def _stroke(d, pts, ink=INK, width=1, close=True):
     d.line(path, fill=ink, width=width)
 
 
-def _major(d, number, cx, cy, r, rand, turned=False):
+def _major(d, number, cx, cy, r, rand):
     d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=INK, width=2)
     inner = r * 0.88
     d.ellipse([cx - inner, cy - inner, cx + inner, cy + inner], outline=INK, width=1)
 
     sides = 3 + number % 7
-    rot = (number % 5) * math.pi / 12 + (math.pi if turned else 0.0)
+    rot = (number % 5) * math.pi / 12
     _stroke(d, _poly(cx, cy, inner * 0.94, sides, rot), INK, 1)
     for i in range(sides):
         a = rot + 2 * math.pi * i / sides
@@ -202,7 +199,7 @@ def _major(d, number, cx, cy, r, rand, turned=False):
         d.ellipse([cx - hub * 0.45, cy - hub * 0.45, cx + hub * 0.45, cy + hub * 0.45], fill=INK)
 
 
-def _pip(d, element, count, cx, cy, r, turned=False):
+def _pip(d, element, count, cx, cy, r):
     d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=ORNAMENT, width=1)
     if count == 1:
         _mark(d, element, cx, cy, r * 0.60, width=2)
@@ -210,7 +207,7 @@ def _pip(d, element, count, cx, cy, r, turned=False):
     orbit = r * 0.66
     marks = min(count, 10)
     size = max(9.0, orbit * 2 * math.sin(math.pi / marks) * 0.42)
-    points = _ring_positions(marks, cx, cy, orbit, turned)
+    points = _ring_positions(marks, cx, cy, orbit)
     if marks >= 3:
         _stroke(d, points, FAINT, 1)
     else:
@@ -219,8 +216,8 @@ def _pip(d, element, count, cx, cy, r, turned=False):
         _mark(d, element, px, py, size, width=1)
 
 
-def _court(d, element, rank, cx, cy, r, turned=False):
-    flip = -1 if turned else 1
+def _court(d, element, rank, cx, cy, r):
+    flip = 1
     d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=ORNAMENT, width=1)
     _stroke(d, _poly(cx, cy, r * 0.80, 4, -math.pi / 2), INK, 1)
     _mark(d, element, cx, cy - r * 0.10 * flip, r * 0.46, width=2)
@@ -233,7 +230,7 @@ def _court(d, element, rank, cx, cy, r, turned=False):
         d.line([round(x - half), round(y), round(x + half), round(y)], fill=INK, width=3)
 
 
-def gravure_face(name, w, h, turned=False, wires=True):
+def gravure_face(name, w, h, wires=True):
     img = Image.new("L", (w, h), PAPER)
     d = ImageDraw.Draw(img)
     d.fontmode = "1"
@@ -244,11 +241,11 @@ def gravure_face(name, w, h, turned=False, wires=True):
     r = min(w * 0.30, h * 0.20)
 
     if kind == "major":
-        _major(d, value, cx, cy, r, rand, turned)
+        _major(d, value, cx, cy, r, rand)
     elif kind == "pip":
-        _pip(d, element, value, cx, cy, r, turned)
+        _pip(d, element, value, cx, cy, r)
     else:
-        _court(d, element, value, cx, cy, r, turned)
+        _court(d, element, value, cx, cy, r)
 
     if wires:
         _wires(d, w, h, cx, cy, r, rand, majors=kind == "major")
@@ -332,7 +329,7 @@ def style_names():
     return [name for name, _ in STYLES]
 
 
-def face(name, w, h, turned=False, style=0, wires=True):
+def face(name, w, h, style=0, wires=True):
     """`wires=False` drops the board layer.
 
     The wires are drawn in a grey a mono refresh erases, and the reading is a mono
@@ -340,4 +337,16 @@ def face(name, w, h, turned=False, style=0, wires=True):
     rather than with an invisible half. At strip size they would be clutter anyway.
     """
     _, draw = STYLES[style % len(STYLES)]
-    return draw(name, w, h, turned, wires)
+    return draw(name, w, h, wires)
+
+
+def empty_band(w, h):
+    """The clear strip below the figure, in plate coordinates.
+
+    Every face here is a figure centred in the plate with room above and below it,
+    so a card can carry its own name without anything being drawn over anything.
+    Returns (top, bottom) of the space that is free.
+    """
+    cy = h * 0.5
+    r = min(w * 0.30, h * 0.20)
+    return round(cy + r + 6), round(h - 6)

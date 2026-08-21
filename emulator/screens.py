@@ -161,26 +161,38 @@ def confirm(transcript, items):
 card_seed = cardface.seed
 
 
-def card(name, orientation, index, total, plate=None, style=0, label=None, turn_word=None):
-    """One card, full width. A reversed plate is turned; its name is not."""
+def card(name, orientation=None, index=1, total=1, plate=None, style=0, label=None, turn_word=None):
+    """One card, full width. There are no reversals; every card is drawn upright."""
     img = _canvas()
     x0, y0, w, h = layout.CARD_RECT
-    turned = orientation == "reversed"
-    if plate is not None:
-        face = plate.rotate(180) if turned else plate
-    else:
-        face = cardface.face(name, w, h, turned=turned, style=style)
+    face = plate if plate is not None else cardface.face(name, w, h, style=style)
     img.paste(face, (x0, y0))
     d = _draw(img)
     d.rectangle([x0, y0, x0 + w - 1, y0 + h - 1], outline=INK, width=2)
-    d.text((W // 2, layout.CARD_NAME_Y), label or name, font=CARD_NAME, fill=INK, anchor="mm")
-    d.text((W // 2, layout.CARD_ORIENT_Y), turn_word or orientation, font=SMALL, fill=ORNAMENT, anchor="mm")
+    _name_on_plate(d, x0, y0, w, h, label or name)
     if total > 1:
         d.text((layout.MARGIN, layout.CARD_ORIENT_Y), f"{index}/{total}", font=SMALL, fill=ORNAMENT, anchor="lm")
     return img
 
 
-def reading(lines, page, pages, cards=(), deck=None, style=0):
+def _name_on_plate(d, x, y, w, h, name):
+    """The card's name goes on the card, in the clear strip under its figure.
+
+    There is room there — the figure never fills the plate — so the name needs
+    neither a banner over the art nor a line stolen from the reading. It is the
+    same place a printed deck puts it.
+    """
+    top, bottom = cardface.empty_band(w, h)
+    cols = max(6, (w - 12) // 8)
+    lines = typeset.wrap(name, cols)[:2]
+    font = HINT if w < 110 else BODY
+    step = font.size + 3
+    y0 = y + top + max(0, (bottom - top - step * len(lines)) // 2)
+    for i, line in enumerate(lines):
+        d.text((x + w // 2, y0 + i * step), line, font=font, fill=INK, anchor="ma")
+
+
+def reading(lines, page, pages, cards=(), deck=None, style=0, front=0):
     """The cards stay. They shrink to a strip across the top and remain there while
     the words arrive, because a reading you cannot see the cards for is a reading
     about nothing. The text lives in a frame below them.
@@ -204,12 +216,13 @@ def reading(lines, page, pages, cards=(), deck=None, style=0):
         return img
 
     d = _draw(img)
-    for (x, y, cw, ch), (name, orientation) in zip(layout.card_strip(len(cards)), cards):
-        plate = cardface.face(
-            name, cw, ch, turned=orientation == "reversed", style=style, wires=False
-        )
-        img.paste(plate, (x, y))
+    plates = layout.card_strip(len(cards))
+    for index in layout.draw_order(len(cards), front):
+        x, y, cw, ch = plates[index]
+        name = cards[index][0]
+        img.paste(cardface.face(name, cw, ch, style=style, wires=False), (x, y))
         d.rectangle([x, y, x + cw - 1, y + ch - 1], outline=INK, width=2)
+        _name_on_plate(d, x, y, cw, ch, deck.localize(name) if deck else name)
     d.rectangle(
         [layout.MARGIN, layout.FRAME_TOP, W - layout.MARGIN, layout.FOOTER_Y - 8],
         outline=INK, width=1,

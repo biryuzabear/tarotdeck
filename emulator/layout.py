@@ -74,6 +74,23 @@ def card_strip(count):
     y = CARD_STRIP_TOP + (band - height - 24) // 2
     return [(x + i * step, y + i * 12, width, height) for i in range(3)]
 
+
+def draw_order(count, front):
+    """Which plate is painted last, and therefore whole.
+
+    The cascade's positions never move — moving them would repaint the whole band
+    on every page turn. Only the order changes, so the card the page is talking
+    about is the one nothing overlaps.
+
+    Behind it the cards keep the order a hand deals them: the first card lies over
+    the second, the second over the third. Painting the rest in ascending order put
+    the third card on top of the second, which reads as the pile having been
+    shuffled rather than dealt.
+    """
+    front = max(0, min(count - 1, front))
+    rest = sorted((i for i in range(count) if i != front), reverse=True)
+    return rest + [front]
+
 CARD_RECT = (16, 8, 248, 424)
 CARD_NAME_Y = 448
 CARD_ORIENT_Y = 468

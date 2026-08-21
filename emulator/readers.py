@@ -302,10 +302,10 @@ class MeaningsReader(Reader):
         cards = _cards_from_prompt(prompt)
         if not cards:
             raise ReaderError("no cards to describe")
-        for name, turned, keywords in cards:
+        for name, _turn, keywords in cards:
             if cancel is not None and cancel.is_set():
                 return
-            yield f"{name}, {turned}. "
+            yield f"{name}. "
             yield keywords.rstrip(".") + ". "
         yield self.CLOSE.get(self.language, self.CLOSE["en"])
 

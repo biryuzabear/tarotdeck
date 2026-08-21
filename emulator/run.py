@@ -49,8 +49,15 @@ def main():
 
     threading.Thread(target=session.start, daemon=True).start()
 
-    controls.encoder.when_rotated_clockwise = lambda: session.post("turn", 1)
-    controls.encoder.when_rotated_counter_clockwise = lambda: session.post("turn", -1)
+    dial = controls.Dial()
+
+    def turned(delta):
+        move = dial.step(delta)
+        if move:
+            session.post("turn", move)
+
+    controls.encoder.when_rotated_clockwise = lambda: turned(1)
+    controls.encoder.when_rotated_counter_clockwise = lambda: turned(-1)
     controls.tick_left.when_pressed = lambda: session.post("tick_left")
     controls.tick_right.when_pressed = lambda: session.post("tick_right")
     controls.touch.when_pressed = lambda: session.post("pad")

@@ -309,13 +309,32 @@ three, King four.
 style already speaks. Wands is fire, a triangle point up; Cups is water, point down;
 Swords is air, up and barred; Pentacles is earth, down and barred.
 
-**A reversed card turns its composition, never its marks.** Rotating the finished
-plate was the obvious way to show a reversal and it was wrong: the four triangles
-map onto each other under 180 degrees, so a reversed Swords read as Pentacles. The
-turn is applied to where the marks sit while each mark stays the right way up.
+**There are no reversed cards.** Dropped — every card is drawn and read upright.
+The reversed keyword tables stay in the training data and are simply not read; the
+model saw both orientations, so a prompt that only ever says `(upright)` is a
+subset of what it learned rather than a shape it has never seen.
 
 The cog that used to sit at the centre of every plate is gone. It was identical on
 all 78 and, being the largest thing there, it was all anyone saw.
+
+## The cards follow the reading
+The plates do not go away when the words arrive, and they do not sit still either.
+The card the current page is talking about is the one nothing overlaps.
+
+This works because the readings are built card by card. Measured over the corpus:
+every three-card answer names all three, 99 % of them in the order they were dealt,
+at roughly the thirds of the text. So the next card's name arriving in the stream is
+the signal that its part has begun.
+
+It is not one page per card — a card's part runs to a median of 9 lines against a
+page of 9, so about half of them spill onto a second page and the card simply stays
+in front across both. Behind it the cascade keeps dealt order, first over second
+over third, and its positions never move: only the paint order changes, so a page
+turn does not have to repaint the band.
+
+Each card carries its own name in the clear strip under its figure — the figure
+never fills the plate, so the name needs neither a banner over the art nor a line
+stolen from the reading.
 
 ## Open
 - What two- and three-card spreads are *for*

@@ -37,7 +37,7 @@ def beside(d, plate, name, orientation, single):
     cols = max(4, room // 8)
     for i, line in enumerate(typeset.wrap(name, cols)):
         d.text((left, y + 14 + i * 17), line, font=NAME_SMALL, fill=INK)
-    d.text((left, y + h - 24), orientation, font=TURN, fill=INK)
+
 
 
 def under(d, plate, name, orientation, single):
@@ -52,13 +52,11 @@ def inside(d, plate, name, orientation, single):
     x, y, w, h = plate
     font = NAME if single else NAME_SMALL
     d.rectangle([x + 2, y + h - 30, x + w - 3, y + h - 3], fill=PAPER)
-    d.text((x + w // 2, y + h - 22), name, font=font, fill=INK, anchor="mm")
-    d.text((x + w // 2, y + h - 9), orientation, font=TURN, fill=INK, anchor="mm")
+    d.text((x + w // 2, y + h - 16), name, font=font, fill=INK, anchor="mm")
 
 
 def banner(d, plate, name, orientation, single):
-    """A filled band across the foot of the plate. The loudest of the four, and the
-    only one a reversed card cannot swallow."""
+    """A filled band across the foot of the plate. The loudest of the four."""
     x, y, w, h = plate
     font = NAME if single else NAME_SMALL
     d.rectangle([x + 2, y + h - 28, x + w - 3, y + h - 3], fill=INK)

@@ -3,7 +3,7 @@
 The prompt shape is not a choice — it is the shape the model was trained on, and
 it is reproduced here character for character:
 
-    <question> Cards: 1. <Name> (upright) [<kw, kw, kw>] 2. <Name> (reversed) [...]
+    <question> Cards: 1. <Name> (upright) [<kw, kw, kw>] 2. <Name> (upright) [...]
 
 The keyword block is retrieval, not decoration: a 0.8B model cannot be trusted to
 recall what the Five of Wands means, so the meaning is looked up by drawn card
@@ -23,7 +23,12 @@ from pathlib import Path
 DATA = Path(__file__).resolve().parent.parent / "tarot_model" / "dataset"
 
 UPRIGHT = "upright"
-REVERSED = "reversed"
+"""The only orientation. Reversals were dropped — see docs/UI.md.
+
+The tables for reversed meanings are still in the training data and are simply not
+read. The model saw both orientations in training, so a prompt that only ever says
+`(upright)` is a subset of what it learned, not a shape it has never seen.
+"""
 
 ENGLISH, RUSSIAN = "en", "ru"
 
@@ -51,7 +56,6 @@ class Deck:
         self.local = _table(language, "card_names.txt")
         self.names = list(_table(ENGLISH, "card_names.txt"))
         self.upright = _table(language, "upright.txt")
-        self.reversed = _table(language, "reversed.txt")
         self.random = random.Random(seed)
         missing = [n for n in self.names if self.localize(n) not in self.upright]
         if missing:
@@ -63,22 +67,17 @@ class Deck:
     def __len__(self):
         return len(self.names)
 
-    def keywords(self, name, orientation):
-        table = self.upright if orientation == UPRIGHT else self.reversed
-        return table[self.localize(name)]
+    def keywords(self, name, orientation=UPRIGHT):
+        return self.upright[self.localize(name)]
 
     def draw(self, count):
-        picked = self.random.sample(self.names, count)
-        return [
-            (name, UPRIGHT if self.random.random() < 0.5 else REVERSED)
-            for name in picked
-        ]
+        return [(name, UPRIGHT) for name in self.random.sample(self.names, count)]
 
 
 LABEL = {ENGLISH: "Cards:", RUSSIAN: "Карты:"}
 TURN = {
-    ENGLISH: {UPRIGHT: "upright", REVERSED: "reversed"},
-    RUSSIAN: {UPRIGHT: "прямо", REVERSED: "перевёрнуто"},
+    ENGLISH: {UPRIGHT: "upright"},
+    RUSSIAN: {UPRIGHT: "прямо"},
 }
 
 

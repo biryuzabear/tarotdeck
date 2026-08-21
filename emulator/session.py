@@ -236,7 +236,7 @@ class Session:
         self.reader = self.reader_for(self.mode, self.deck, self.language)
         prompt = tarot.build_prompt(self.question, self.cards, self.deck)
         self.lines = []
-        self.stream = typeset.LineStream(layout.READ_COLS - 2)
+        self.stream = typeset.LineStream(layout.READ_COLS - 2, cards=self.cards)
         self.pending = []
 
         def job(cancel):
@@ -255,10 +255,8 @@ class Session:
             self.strip.position(i - 1, of=len(self.cards))
             self.glass.full(
                 screens.card(
-                    name, orientation, i, len(self.cards),
-                    style=self.style,
-                    label=self.deck.localize(name),
-                    turn_word=tarot.TURN[self.language][orientation],
+                    name, index=i, total=len(self.cards),
+                    style=self.style, label=self.deck.localize(name),
                 )
             )
         self.enter("hold")
@@ -423,11 +421,20 @@ class Session:
             elif len(self.pages) != was:
                 self._mark_pages()
 
+    def _front_card(self):
+        """The card the words on this page are about."""
+        rows = layout.READ_ROWS_WITH_CARDS
+        first = self.page * rows
+        marks = self.stream.line_card if self.stream else []
+        if not marks:
+            return 0
+        return marks[min(first, len(marks) - 1)]
+
     def _page_image(self):
         page = self.pages[self.page] if self.page < len(self.pages) else []
         return screens.reading(
             page, self.page + 1, len(self.pages),
-            cards=self.cards, deck=self.deck, style=self.style,
+            cards=self.cards, deck=self.deck, style=self.style, front=self._front_card(),
         )
 
     def _show_page(self):
