@@ -29,3 +29,13 @@ MIN_REFRESH_INTERVAL = 180.0
 Waveshare's whole e-paper range; no device could obey it."""
 
 GHOST_PER_FAST_REFRESH = 14
+
+
+CARD_DWELL = 1.6
+"""Seconds a revealed card is held after its refresh has finished.
+
+The waveform alone was the pacing and it was not enough: a four-grey refresh spends
+most of its 3.04 s flashing, so the card itself is only settled and legible for the
+last second or so before the next one starts. The dwell is the time the card is
+simply there, which is the part a person actually looks at.
+"""

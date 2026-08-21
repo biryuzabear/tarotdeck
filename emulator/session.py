@@ -49,7 +49,7 @@ MODE_HINT = {
     "cards": "no model, just the meanings",
 }
 
-LANGUAGES = [("en", "english"), ("ru", "\u0440\u0443\u0441\u0441\u043a\u0438\u0439")]
+LANGUAGES = [("en", "english"), ("ru", "русский")]
 NO_LOCAL_MODEL = {"ru"}
 """Languages with no model to load on the device.
 
@@ -172,7 +172,7 @@ class Session:
 
     def _enter_spread(self):
         self.status = "how many cards"
-        self.glass.full(screens.menu("TAROT", SPREADS, self.mode, 4242))
+        self.glass.full(screens.menu("TAROT", SPREADS, self.mode, 4242, language=self.language))
         self.strip.position(self.index, of=len(SPREADS))
 
     def _enter_settings(self):
@@ -183,7 +183,7 @@ class Session:
     def _draw_settings(self, full=False):
         rows = self._items()
         frame = screens.menu(
-            "SETTINGS", rows, "", 909, ornamented=False, mono=True,
+            "SETTINGS", rows, "", 909, ornamented=False, mono=True, language=self.language,
             page=self.settings.page, pages=self.settings.pages,
         )
         if full:
@@ -194,7 +194,7 @@ class Session:
 
     def _enter_ask(self):
         self.status = "tap the pad and speak"
-        self.glass.mono_full(screens.ask(self.mode))
+        self.glass.mono_full(screens.ask(self.mode, language=self.language))
         self.strip.show_rows([(0, 0, 0, 0), (0, 0, 0, 0), (60, 45, 12, 0)])
 
     def _enter_listen(self):
@@ -205,7 +205,7 @@ class Session:
         except ears_module.EarsError as exc:
             self.enter("trouble", message=str(exc))
             return
-        self.glass.mono_partial(screens.listening(0.0, LISTEN_CAP))
+        self.glass.mono_partial(screens.listening(0.0, LISTEN_CAP, language=self.language))
         self.strip.filling(0.0)
 
     def _enter_hearing(self):
@@ -227,7 +227,7 @@ class Session:
 
     def _enter_confirm(self):
         self.status = "is that the question"
-        self.glass.mono_partial(screens.confirm(self.question, CONFIRM_ITEMS))
+        self.glass.mono_partial(screens.confirm(self.question, CONFIRM_ITEMS, language=self.language))
         self.strip.position(self.index, of=len(CONFIRM_ITEMS))
 
     def _enter_draw(self):
@@ -259,6 +259,7 @@ class Session:
                     style=self.style, label=self.deck.localize(name),
                 )
             )
+            time.sleep(timings.CARD_DWELL)
         self.enter("hold")
 
     def _enter_hold(self):
@@ -273,12 +274,12 @@ class Session:
     def _enter_trouble(self, message="something went wrong"):
         self.status = "trouble"
         self._stop_worker()
-        self.glass.mono_full(screens.trouble(message, TROUBLE_ITEMS))
+        self.glass.mono_full(screens.trouble(message, TROUBLE_ITEMS, language=self.language))
         self.strip.stuck()
 
     def _enter_standing(self):
         self.status = "asleep"
-        self.glass.full(screens.standing())
+        self.glass.full(screens.standing(language=self.language))
         self.strip.off()
 
     # ------------------------------------------------------------------- events
@@ -435,6 +436,7 @@ class Session:
         return screens.reading(
             page, self.page + 1, len(self.pages),
             cards=self.cards, deck=self.deck, style=self.style, front=self._front_card(),
+            language=self.language,
         )
 
     def _show_page(self):

@@ -243,7 +243,8 @@ not offline working. `cards` needs no model and the Russian keyword tables are i
 the repo, so Russian keeps it. Choosing Russian moves the mode off offline and
 leaves online and cards.
 
-Everything the querent sees turns with the language, and so does the prompt: the
+Everything the querent sees turns with the language — every label, hint, footer and
+error, not only the cards — and so does the prompt: the
 Russian training rows read `Карты: 1. Восьмёрка Кубков (перевёрнуто) [...]`, so an
 English scaffold around Russian keywords would be a shape the adapter never saw.
 

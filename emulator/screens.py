@@ -19,6 +19,7 @@ from PIL import Image, ImageDraw
 
 import cardface
 import gravure
+import strings
 import layout
 import typeset
 
@@ -79,24 +80,25 @@ def _page_marks(d, page, pages, y):
         x += size + gap
 
 
-def menu(title, items, note="", seed=4242, ornamented=True, page=0, pages=1, mono=False):
+def menu(title, items, note="", seed=4242, ornamented=True, page=0, pages=1, mono=False, language="en"):
     """Top informs, bottom chooses. The selection is the lit lens, not ink."""
     img = _canvas()
     if ornamented:
         img.paste(_ornament(seed), (0, layout.ORNAMENT_TOP))
     d = _draw(img)
-    d.text((18, layout.TITLE_Y), title, font=SMALL, fill=_tone(mono, ORNAMENT))
+    t = strings.translator(language)
+    d.text((18, layout.TITLE_Y), t(title), font=SMALL, fill=_tone(mono, ORNAMENT))
     _page_marks(d, page, pages, layout.MENU_TOP - 30)
     if note:
-        d.text((18, layout.MENU_TOP - 44), note, font=BODY, fill=INK)
+        d.text((18, layout.MENU_TOP - 44), t(note), font=BODY, fill=INK)
     d.line([(0, layout.MENU_TOP - 12), (W, layout.MENU_TOP - 12)], fill=_tone(mono, ORNAMENT), width=2)
     for i, (label, hint) in enumerate(items[: layout.ROWS]):
         y = layout.row_centre(i)
         if i:
             d.line([(18, y - layout.ROW_H / 2), (W - 18, y - layout.ROW_H / 2)], fill=_tone(mono, FAINT), width=1)
-        d.text((26, y - 16), label, font=ROW, fill=INK)
+        d.text((26, y - 16), t(label), font=ROW, fill=INK)
         if hint and hint != "-":
-            d.text((26, y + 12), _fit(hint, 29), font=HINT, fill=_tone(mono, ORNAMENT))
+            d.text((26, y + 12), _fit(t(hint), 29), font=HINT, fill=_tone(mono, ORNAMENT))
     return img
 
 
@@ -108,43 +110,49 @@ def splash():
     return img
 
 
-def ask(mode):
+def ask(mode, language="en"):
     img = _canvas()
     d = _draw(img)
-    d.text((layout.MARGIN, 90), "ask", font=TITLE, fill=INK)
-    d.text((layout.MARGIN, 130), "tap the pad and speak.", font=BODY, fill=INK)
-    d.text((layout.MARGIN, 156), "tap again when you are done.", font=BODY, fill=INK)
-    d.text((layout.MARGIN, layout.FOOTER_Y - 6), f"{mode}   tick left to go back", font=SMALL, fill=INK)
+    t = strings.translator(language)
+    d.text((layout.MARGIN, 90), t("ask"), font=TITLE, fill=INK)
+    for i, line in enumerate((t("tap the pad and speak."), t("tap again when you are done."))):
+        d.text((layout.MARGIN, 130 + i * 26), _fit(line, 31), font=BODY, fill=INK)
+    d.text((layout.MARGIN, layout.FOOTER_Y - 6), f'{t(mode)}   {t("tick left to go back")}',
+           font=SMALL, fill=INK)
     return img
 
 
-def listening(seconds, cap):
+def listening(seconds, cap, language="en"):
     img = _canvas()
     d = _draw(img)
-    d.text((layout.MARGIN, 90), "listening", font=TITLE, fill=INK)
+    t = strings.translator(language)
+    d.text((layout.MARGIN, 90), t("listening"), font=TITLE, fill=INK)
     width = int((W - layout.MARGIN * 2) * min(seconds / cap, 1.0))
     d.rectangle([layout.MARGIN, 140, W - layout.MARGIN, 162], outline=INK, width=2)
     d.rectangle([layout.MARGIN, 140, layout.MARGIN + width, 162], fill=INK)
-    d.text((layout.MARGIN, 176), f"{seconds:0.1f}s of {cap:0.0f}", font=BODY, fill=INK)
-    d.text((layout.MARGIN, layout.FOOTER_Y - 6), "tap the pad to stop", font=SMALL, fill=INK)
+    d.text((layout.MARGIN, 176), t("{seconds}s of {cap}", seconds=f"{seconds:0.1f}", cap=f"{cap:0.0f}"),
+           font=BODY, fill=INK)
+    d.text((layout.MARGIN, layout.FOOTER_Y - 6), t("tap the pad to stop"), font=SMALL, fill=INK)
     return img
 
 
-def hearing():
+def hearing(language="en"):
     img = _canvas()
     d = _draw(img)
-    d.text((layout.MARGIN, 90), "hearing", font=TITLE, fill=INK)
-    d.text((layout.MARGIN, 130), "putting words to it.", font=BODY, fill=INK)
+    t = strings.translator(language)
+    d.text((layout.MARGIN, 90), t("hearing"), font=TITLE, fill=INK)
+    d.text((layout.MARGIN, 130), t("putting words to it."), font=BODY, fill=INK)
     return img
 
 
-def confirm(transcript, items):
+def confirm(transcript, items, language="en"):
     """The transcript above, three things to do with it below."""
     img = _canvas()
     d = _draw(img)
-    d.text((layout.MARGIN, layout.TITLE_Y), "heard", font=SMALL, fill=INK)
+    t = strings.translator(language)
+    d.text((layout.MARGIN, layout.TITLE_Y), t("heard"), font=SMALL, fill=INK)
     y = 44
-    for line in typeset.wrap(transcript or "(nothing)", layout.READ_COLS)[:8]:
+    for line in typeset.wrap(transcript or t("(nothing)"), layout.READ_COLS)[:8]:
         d.text((layout.MARGIN, y), line, font=typeset.BODY, fill=INK)
         y += layout.READ_LEADING
     d.line([(0, layout.MENU_TOP - 12), (W, layout.MENU_TOP - 12)], fill=INK, width=2)
@@ -152,9 +160,9 @@ def confirm(transcript, items):
         cy = layout.row_centre(i)
         if i:
             d.line([(18, cy - layout.ROW_H / 2), (W - 18, cy - layout.ROW_H / 2)], fill=INK, width=1)
-        d.text((26, cy - 16), label, font=ROW, fill=INK)
+        d.text((26, cy - 16), t(label), font=ROW, fill=INK)
         if hint and hint != "-":
-            d.text((26, cy + 12), hint, font=HINT, fill=INK)
+            d.text((26, cy + 12), t(hint), font=HINT, fill=INK)
     return img
 
 
@@ -192,7 +200,7 @@ def _name_on_plate(d, x, y, w, h, name):
         d.text((x + w // 2, y0 + i * step), line, font=font, fill=INK, anchor="ma")
 
 
-def reading(lines, page, pages, cards=(), deck=None, style=0, front=0):
+def reading(lines, page, pages, cards=(), deck=None, style=0, front=0, language="en"):
     """The cards stay. They shrink to a strip across the top and remain there while
     the words arrive, because a reading you cannot see the cards for is a reading
     about nothing. The text lives in a frame below them.
@@ -200,10 +208,11 @@ def reading(lines, page, pages, cards=(), deck=None, style=0, front=0):
     Everything here is ink on paper: this screen is sent in mono, where any grey
     would come out white.
     """
+    t = strings.translator(language)
     footer = ""
     if pages > 1:
-        footer = f"{page} of {pages}"
-        footer += "   turn the gear" if page < pages else "   tick to seal"
+        footer = t("{page} of {pages}", page=page, pages=pages)
+        footer += "   " + (t("turn the gear") if page < pages else t("tick to seal"))
 
     top = layout.FRAME_TOP + layout.FRAME_PAD if cards else layout.READ_TOP
     rows = layout.READ_ROWS_WITH_CARDS if cards else layout.READ_ROWS
@@ -230,12 +239,13 @@ def reading(lines, page, pages, cards=(), deck=None, style=0, front=0):
     return img
 
 
-def trouble(message, items):
+def trouble(message, items, language="en"):
     img = _canvas()
     d = _draw(img)
-    d.text((layout.MARGIN, layout.TITLE_Y), "trouble", font=SMALL, fill=INK)
+    t = strings.translator(language)
+    d.text((layout.MARGIN, layout.TITLE_Y), t("trouble"), font=SMALL, fill=INK)
     y = 60
-    for line in typeset.wrap(message, layout.READ_COLS)[:6]:
+    for line in typeset.wrap(t(message), layout.READ_COLS)[:6]:
         d.text((layout.MARGIN, y), line, font=typeset.BODY, fill=INK)
         y += layout.READ_LEADING
     d.line([(0, layout.MENU_TOP - 12), (W, layout.MENU_TOP - 12)], fill=INK, width=2)
@@ -243,15 +253,15 @@ def trouble(message, items):
         cy = layout.row_centre(i)
         if i:
             d.line([(18, cy - layout.ROW_H / 2), (W - 18, cy - layout.ROW_H / 2)], fill=INK, width=1)
-        d.text((26, cy - 16), label, font=ROW, fill=INK)
+        d.text((26, cy - 16), t(label), font=ROW, fill=INK)
     return img
 
 
-def standing():
+def standing(language="en"):
     """What the glass holds when the deck is off. E-paper keeps it with no power."""
     img = _canvas()
     img.paste(_ornament(77), (0, 140))
     d = _draw(img)
     d.text((W // 2, 90), "TAROT", font=TITLE, fill=INK, anchor="mm")
-    d.text((W // 2, H - 40), "asleep", font=SMALL, fill=ORNAMENT, anchor="mm")
+    d.text((W // 2, H - 40), strings.tr(language, "asleep"), font=SMALL, fill=ORNAMENT, anchor="mm")
     return img
