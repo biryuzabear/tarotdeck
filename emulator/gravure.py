@@ -168,18 +168,26 @@ def _link(prims, cx, cy, first, second, bus_r, via_r, lanes, spacing):
 
 
 def ornament(w, h, seed):
-    """Returns an L image: FAINT background layer, ORNAMENT foreground."""
+    """Returns an L image: FAINT background layer, ORNAMENT foreground.
+
+    The composition turns with the pane. A wide, short band has no room for an
+    orbit above and below the hero, so the satellites go out to the sides and the
+    bus arc travels over the top. A tall pane — a card plate — is the other way
+    round: the satellites stack above and below, the bus goes round the side, and
+    the hero can be much larger because width is no longer what limits it.
+    """
     img = Image.new("L", (w, h), PAPER)
     d = ImageDraw.Draw(img)
     r = rng(seed)
 
-    cx, cy = w * 0.5, h * 0.46
-    core = min(w * 0.22, h * 0.36)
+    tall = h > w * 1.25
+    cx, cy = w * 0.5, h * (0.5 if tall else 0.46)
+    core = min(w * 0.34, h * 0.26) if tall else min(w * 0.22, h * 0.36)
     via = max(MIN_DOT + 1, core * 0.06)
     lane_gap = max(MIN_GAP, via * 2.2)
 
     back = []
-    for side in range(2):
+    for side in range(2 if not tall else 0):
         left = side == 0
         x = (0.05 + r() * 0.06) * w if left else (0.95 - r() * 0.06) * w
         if abs(x - cx) < core + lane_gap * 3:
@@ -202,29 +210,33 @@ def ornament(w, h, seed):
         pts = _run(-lane_gap if left else w + lane_gap, y, x_end, y + drop, core * 0.5)
         _bundle(back, pts, 2 + int(r() * 2), lane_gap, via)
 
-    # A band this short has no room for an orbit above and below the hero, so
-    # the satellites sit out to the sides and the bus arc carries the link over
-    # the top or under the bottom.
     small = []
     for side in (-1, 1):
         rad = core * (0.26 + r() * 0.10)
         tilt = (r() - 0.5) * 0.5
         reach = core + rad + lane_gap * 5
-        sx = cx + side * math.cos(tilt) * reach
-        sy = cy + math.sin(tilt) * reach
+        if tall:
+            sx = cx + math.sin(tilt) * reach
+            sy = cy + side * math.cos(tilt) * reach
+        else:
+            sx = cx + side * math.cos(tilt) * reach
+            sy = cy + math.sin(tilt) * reach
         if not (rad * 0.4 < sx < w - rad * 0.4 and rad + 2 < sy < h - rad - 2):
             continue
         small.append((sx, sy, rad, math.atan2(sy - cy, sx - cx), math.hypot(sx - cx, sy - cy)))
 
     links = []
     bus = core + lane_gap * 2.5
-    if len(small) == 2 and cy - bus - lane_gap > 0 and cy + bus + lane_gap < h:
+    room = (cx - bus - lane_gap > 0 and cx + bus + lane_gap < w) if tall else (
+        cy - bus - lane_gap > 0 and cy + bus + lane_gap < h
+    )
+    if len(small) == 2 and room:
         ends = [(a, dist - rad - via * 1.4) for _sx, _sy, rad, a, dist in small]
         if min(e[1] for e in ends) - bus >= lane_gap:
-            left = min(ends, key=lambda e: math.cos(e[0]))
-            right = max(ends, key=lambda e: math.cos(e[0]))
-            over_top = r() < 0.5
-            first, second = (left, right) if over_top else (right, left)
+            key = (lambda e: math.sin(e[0])) if tall else (lambda e: math.cos(e[0]))
+            first, second = min(ends, key=key), max(ends, key=key)
+            if r() < 0.5:
+                first, second = second, first
             _link(links, cx, cy, first, second, bus, via, 1 + int(r() * 2), lane_gap)
 
     render(d, back, (0, 0), FAINT)

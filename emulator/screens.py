@@ -12,6 +12,8 @@ in ink alone.
 
 from PIL import Image, ImageDraw
 
+import zlib
+
 import gravure
 import layout
 import typeset
@@ -123,11 +125,18 @@ def confirm(transcript, items):
     return img
 
 
+def card_seed(name):
+    """Stable across runs and machines. `hash()` is not — Python randomises the
+    hash of a string per process, so the same card would wear a different face
+    every time the deck was switched on."""
+    return zlib.crc32(name.encode("utf-8"))
+
+
 def card(name, orientation, index, total, plate=None):
     """One card, full width. A reversed plate is turned; its name is not."""
     img = _canvas()
     x0, y0, w, h = layout.CARD_RECT
-    face = plate if plate is not None else gravure.ornament(w, h, abs(hash(name)) % 999983)
+    face = plate if plate is not None else gravure.ornament(w, h, card_seed(name))
     if orientation == "reversed":
         face = face.rotate(180)
     img.paste(face, (x0, y0))
@@ -135,7 +144,8 @@ def card(name, orientation, index, total, plate=None):
     d.rectangle([x0, y0, x0 + w - 1, y0 + h - 1], outline=INK, width=2)
     d.text((W // 2, layout.CARD_NAME_Y), name, font=CARD_NAME, fill=INK, anchor="mm")
     d.text((W // 2, layout.CARD_ORIENT_Y), orientation, font=SMALL, fill=ORNAMENT, anchor="mm")
-    d.text((layout.MARGIN, layout.TITLE_Y), f"{index} of {total}", font=SMALL, fill=ORNAMENT)
+    if total > 1:
+        d.text((layout.MARGIN, layout.CARD_ORIENT_Y), f"{index}/{total}", font=SMALL, fill=ORNAMENT, anchor="lm")
     return img
 
 

@@ -23,12 +23,13 @@ class ReaderError(RuntimeError):
 class Reader:
     name = "reader"
 
-    def stream(self, prompt):
-        """Yield chunks of the reading as they arrive. Chunks are not words."""
+    def stream(self, prompt, cancel=None):
+        """Yield chunks of the reading as they arrive. Chunks are token fragments,
+        not words. Raises ReaderError. Stops when `cancel` is set."""
         raise NotImplementedError
 
-    def read(self, prompt):
-        return "".join(self.stream(prompt))
+    def read(self, prompt, cancel=None):
+        return "".join(self.stream(prompt, cancel))
 
 
 class ScriptedReader(Reader):
@@ -59,7 +60,7 @@ class ScriptedReader(Reader):
                 by_count[count].append(record["messages"][1]["content"])
         return by_count
 
-    def stream(self, prompt):
+    def stream(self, prompt, cancel=None):
         count = max(1, min(3, prompt.count(") [")))
         pool = self.examples.get(count) or self.examples[1]
         if not pool:
@@ -67,6 +68,8 @@ class ScriptedReader(Reader):
         text = self.random.choice(pool)
         interval = 1.0 / self.rate if self.rate else 0.0
         for word in text.split(" "):
+            if cancel is not None and cancel.is_set():
+                return
             if interval:
                 time.sleep(interval)
             yield word + " "
@@ -81,7 +84,152 @@ class FailingReader(Reader):
         self.after = after
         self.message = message
 
-    def stream(self, prompt):
+    def stream(self, prompt, cancel=None):
         for i in range(self.after):
             yield f"word{i} "
         raise ReaderError(self.message)
+
+
+class HttpReader(Reader):
+    """One reader for both programs, because both speak the same wire.
+
+    `llama-server` and every OpenAI-compatible endpoint stream the same way:
+    server-sent events, one JSON object per `data:` line, terminated by
+    `data: [DONE]`. The only differences are the path, the shape of the request,
+    and where the text sits in each event — so those are the only things that vary
+    here, and there is no adapter layer.
+
+    Deliberately `urllib` from the standard library and no SDK. The Pi's Python
+    situation is awkward enough without a dependency that has to be built, and the
+    whole client is a POST and a loop.
+
+    The local path uses `/completion` rather than `/v1/chat/completions` on purpose.
+    The chat endpoint applies the GGUF's own chat template, and Qwen templates
+    inject a default system turn when none is given — which would put a system
+    message in front of an adapter fine-tuned without one and quietly degrade every
+    reading, with no error to notice. `/completion` sends the string we built and
+    adds nothing to it.
+    """
+
+    COMPLETION = "completion"
+    CHAT = "chat"
+
+    def __init__(
+        self,
+        base_url,
+        flavour=COMPLETION,
+        model=None,
+        api_key=None,
+        system_prompt=None,
+        max_tokens=288,
+        temperature=0.9,
+        timeout=120,
+        name=None,
+    ):
+        self.base_url = base_url.rstrip("/")
+        self.flavour = flavour
+        self.model = model
+        self.api_key = api_key
+        self.system_prompt = system_prompt
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.timeout = timeout
+        self.name = name or flavour
+
+    def _request(self, prompt):
+        if self.flavour == self.COMPLETION:
+            return self.base_url + "/completion", {
+                "prompt": prompt,
+                "n_predict": self.max_tokens,
+                "temperature": self.temperature,
+                "stream": True,
+            }
+        messages = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        return self.base_url + "/chat/completions", {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "stream": True,
+        }
+
+    @staticmethod
+    def _text(event, flavour):
+        if flavour == HttpReader.COMPLETION:
+            return event.get("content", "")
+        choices = event.get("choices") or [{}]
+        return (choices[0].get("delta") or {}).get("content") or ""
+
+    def stream(self, prompt, cancel=None):
+        import json
+        import urllib.error
+        import urllib.request
+
+        url, payload = self._request(prompt)
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        request = urllib.request.Request(
+            url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
+        )
+        try:
+            response = urllib.request.urlopen(request, timeout=self.timeout)
+        except urllib.error.HTTPError as exc:
+            raise ReaderError(f"{self.name}: {exc.code} {exc.reason}") from exc
+        except OSError as exc:
+            raise ReaderError(f"{self.name}: {exc}") from exc
+
+        try:
+            for raw in response:
+                if cancel is not None and cancel.is_set():
+                    return
+                line = raw.decode("utf-8", "replace").strip()
+                if not line.startswith("data:"):
+                    continue
+                body = line[5:].strip()
+                if body == "[DONE]":
+                    return
+                try:
+                    event = json.loads(body)
+                except ValueError:
+                    continue
+                text = self._text(event, self.flavour)
+                if text:
+                    yield normalize(text)
+        except OSError as exc:
+            raise ReaderError(f"{self.name}: {exc}") from exc
+        finally:
+            response.close()
+
+
+_SUBSTITUTIONS = {
+    "‘": "'", "’": "'", "“": '"', "”": '"',
+    "—": ",", "–": "-", "…": "...",
+    "*": "", "#": "", "_": "",
+}
+
+
+def normalize(chunk):
+    """Straighten a chunk without touching its whitespace.
+
+    The training data is plain text — no markdown, no typographic punctuation — but
+    a cloud model prompted into the same voice will still reach for em dashes and
+    curly quotes. This is reimplemented rather than borrowed from
+    `tarot_model/generate.py`, whose version ends with `" ".join(text.split())`:
+    correct for a finished string, fatal for a stream, because it strips the
+    trailing space off every chunk and runs the words together.
+    """
+    for bad, good in _SUBSTITUTIONS.items():
+        if bad in chunk:
+            chunk = chunk.replace(bad, good)
+    return chunk
+
+
+def validate(text, cards):
+    """Which drawn cards the reading failed to mention. Logged, never shown — a
+    reading the querent has already read is not taken away from them."""
+    lowered = text.lower()
+    return [name for name, _ in cards if name.lower() not in lowered]

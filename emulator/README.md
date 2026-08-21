@@ -33,6 +33,27 @@ python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
 | `space`, held | touch pad — dictation |
 | `esc` | quit |
 
+## Pointing it at a model
+
+With nothing set, the deck reads from `ScriptedReader`, which replays real answers
+from the training set. To put a real model behind it:
+
+```
+# a llama-server on the loopback — what the device itself will run
+TAROTDECK_LOCAL_URL=http://127.0.0.1:8080 ./.venv/bin/python run.py
+
+# or Ollama, for a desk with no llama.cpp
+TAROTDECK_LOCAL_CHAT_URL=http://localhost:11434/v1 \
+TAROTDECK_LOCAL_MODEL=smollm2:1.7b ./.venv/bin/python run.py
+
+# the networked program
+OPENAI_API_KEY=... TAROTDECK_CLOUD_MODEL=gpt-4o-mini ./.venv/bin/python run.py
+```
+
+The mode switch in Settings chooses which is asked. Nothing is chosen until the
+cards are drawn, and if the endpoint is unreachable the deck falls back to the
+scripted reader and says so in the info pane rather than pretending.
+
 `TAROTDECK_SCALE=1.4` enlarges the window; at 1.0 the panel is one screen pixel
 per panel pixel.
 

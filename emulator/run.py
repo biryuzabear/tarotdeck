@@ -26,7 +26,7 @@ import panel
 from buzzer import Buzzer
 from glass import Glass
 from leds import Strip
-from readers import ScriptedReader
+import sources
 from session import Session
 
 KEYS = [
@@ -43,7 +43,7 @@ def main():
     strip = Strip()
     window = panel.Window(strip)
     glass = Glass(driver.EPD(), fake_epdconfig)
-    session = Session(glass, strip, Buzzer(), ScriptedReader(tokens_per_second=12))
+    session = Session(glass, strip, Buzzer(), reader_for=sources.for_mode)
 
     import threading
 
@@ -102,6 +102,7 @@ def _status(session, glass):
     return [
         f"{session.state}  —  {session.status}",
         f"{session.mode}   spread {session.spread}   partials left {glass.partials_left()}",
+        f"reader: {session.reader.name if session.reader else '(chosen at draw)'}",
     ]
 
 

@@ -52,10 +52,11 @@ LISTEN_CAP = 10.0
 
 
 class Session:
-    def __init__(self, glass, strip, buzzer, reader, deck=None, transcribe=None):
+    def __init__(self, glass, strip, buzzer, reader=None, deck=None, transcribe=None, reader_for=None):
         self.glass = glass
         self.strip = strip
         self.buzzer = buzzer
+        self.reader_for = reader_for or (lambda mode: reader)
         self.reader = reader
         self.deck = deck or tarot.Deck()
         self.transcribe = transcribe or (lambda seconds: "what should i know about the week ahead")
@@ -164,6 +165,7 @@ class Session:
     def _enter_draw(self):
         self.status = "the cards turn"
         self.cards = self.deck.draw(self.spread)
+        self.reader = self.reader_for(self.mode)
         prompt = tarot.build_prompt(self.question, self.cards, self.deck)
         self.lines = []
         self.stream = typeset.LineStream(layout.READ_COLS)
@@ -171,7 +173,7 @@ class Session:
 
         def job(cancel):
             try:
-                for chunk in self.reader.stream(prompt):
+                for chunk in self.reader.stream(prompt, cancel):
                     if cancel.is_set():
                         return
                     self.post(CHUNK, chunk)
