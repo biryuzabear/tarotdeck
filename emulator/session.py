@@ -321,13 +321,8 @@ class Session:
                 self.enter("ask")
             else:
                 self.enter("spread")
-        elif self.state == "read":
-            if self.page < len(self.pages) - 1:
-                self.page += 1
-                self._show_page()
-            else:
-                self.buzzer.play(880, 90)
-                self.enter("spread")
+        elif self.state in ("read", "done"):
+            self._close_reading()
         elif self.state == "trouble":
             if self.index == 0:
                 self.enter("draw")
@@ -336,6 +331,18 @@ class Session:
                 self.enter("draw")
             else:
                 self.enter("ask")
+
+    def _close_reading(self):
+        """Either tick closes the reading.
+
+        The gear turns the pages, both ways and wrapping, so neither tick is needed
+        for that. A left gear that did nothing on page one while the right gear
+        ended the whole reading was two controls behaving differently for no reason
+        a hand could learn. The footer says so on every page.
+        """
+        self.buzzer.play(880, 90)
+        self._stop_worker()
+        self.enter("spread")
 
     def _settings_confirm(self):
         row = self.settings.cursor
@@ -360,9 +367,8 @@ class Session:
             self.enter("settings")
         elif self.state in ("settings", "ask", "confirm", "trouble"):
             self.enter("spread" if self.state in ("settings", "ask") else "ask")
-        elif self.state == "read" and self.page > 0:
-            self.page -= 1
-            self._show_page()
+        elif self.state in ("read", "done"):
+            self._close_reading()
 
     def _on_pad(self, _=None):
         if self.state == "ask":
@@ -392,7 +398,8 @@ class Session:
         if self.state == "hold":
             self.enter("read")
         self._flush_lines(final=True)
-        self.status = f"read it - {len(self.pages)} pages, tick to seal"
+        self.state = "done"
+        self.status = f"read it - {len(self.pages)} pages, either tick closes"
         self._mark_pages()
 
     def _on_failed(self, message):
@@ -436,7 +443,7 @@ class Session:
         return screens.reading(
             page, self.page + 1, len(self.pages),
             cards=self.cards, deck=self.deck, style=self.style, front=self._front_card(),
-            language=self.language,
+            language=self.language, growing=self.state != "done",
         )
 
     def _show_page(self):

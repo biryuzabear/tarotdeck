@@ -57,9 +57,8 @@ TABLE = {
         "say it again": "сказать заново",
         "another spread": "другой расклад",
         # reading
-        "{page} of {pages}": "{page} из {pages}",
-        "turn the gear": "крутите шестерёнку",
-        "tick to seal": "шестерёнка вправо — закрыть",
+        "{page} / {pages}": "{page} / {pages}",
+        "tick either way to close": "любой тик — закрыть",
         # trouble and rest
         "trouble": "сбой",
         "Try again": "Ещё раз",

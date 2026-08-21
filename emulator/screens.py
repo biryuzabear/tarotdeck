@@ -201,7 +201,7 @@ def _name_on_plate(d, x, y, w, h, name):
         d.text((x + w // 2, y0 + i * step), line, font=font, fill=INK, anchor="ma")
 
 
-def reading(lines, page, pages, cards=(), deck=None, style=0, front=0, language="en"):
+def reading(lines, page, pages, cards=(), deck=None, style=0, front=0, language="en", growing=False):
     """The cards, their names listed under them, a rule, and the reading.
 
     Everything sits on one margin and nothing is boxed: the reading is on the page,
@@ -218,10 +218,15 @@ def reading(lines, page, pages, cards=(), deck=None, style=0, front=0, language=
     """
     t = strings.translator(language)
     count = len(cards)
-    footer = ""
-    if pages > 1:
-        footer = t("{page} of {pages}", page=page, pages=pages)
-        footer += "   " + (t("turn the gear") if page < pages else t("tick to seal"))
+
+    # The count is on the glass from the first line onwards. While the reading is
+    # still arriving the total can only be what has landed so far, so it is marked
+    # as provisional rather than stated as final: three dots, and the number climbs
+    # as the words come in.
+    footer = t("{page} / {pages}", page=page, pages=pages)
+    if growing:
+        footer += "..."
+    footer += "   " + t("tick either way to close")
 
     if not cards:
         return typeset.page_image(lines, (W, H), footer=footer or None)
