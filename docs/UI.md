@@ -144,8 +144,12 @@ is black on white anyway, so mono costs us nothing.
 That changes what the screen can do. Within a state it can carry a **live region**
 updated at 0.3 s while the rest stays put:
 
-- **The reading can print as it generates**, line by line, instead of 17 seconds of
-  nothing followed by one repaint.
+- **The reading can print as it generates, one line per fast refresh** — decided,
+  reversing an earlier note that said one word per refresh. A typical reading is
+  133 words but only 25 lines: by word it costs 133 partials and 42 s of panel
+  time against a model that finished in 17; by line it costs 25 partials and 8 s,
+  and a 31-column line takes about 0.65 s to generate against a 0.32 s refresh, so
+  the panel waits on the model instead of trailing it by half a minute.
 - **The transcribed question gets shown** for confirmation. This used to be a
   dilemma — spend 3 s on it or risk a misheard question costing the whole wait.
   At 0.3 s there's no dilemma.

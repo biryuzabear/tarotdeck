@@ -1,7 +1,12 @@
-"""Entry point. App logic runs in a thread; the window owns the main thread."""
+"""Entry point. The session owns the deck; the window owns the main thread.
+
+Nothing here knows what a tarot reading is. It turns key presses into gpiozero pin
+edges, gpiozero callbacks into session events, and pumps the session between frames.
+That is the whole job, and it is deliberately the whole job: everything below this
+file has to run on a Pi where there are no key presses and no window.
+"""
 
 import sys
-import threading
 import time
 
 sys.path.insert(0, ".")
@@ -19,14 +24,16 @@ import pygame
 import controls
 import panel
 from buzzer import Buzzer
-from deck import Deck
+from glass import Glass
 from leds import Strip
+from readers import ScriptedReader
+from session import Session
 
 KEYS = [
     "left / right   right gear, turn",
-    "z              left gear, tick left (back)",
-    "x              left gear, tick right (ok)",
-    "space (hold)   touch pad, dictation",
+    "z              left gear, tick left",
+    "x              left gear, tick right",
+    "space          touch pad, tap to start and stop",
     "esc            quit",
 ]
 
@@ -35,36 +42,23 @@ def main():
     fake_epdconfig.on_frame = panel.on_frame
     strip = Strip()
     window = panel.Window(strip)
-    deck = Deck(driver.EPD(), strip, controls, Buzzer())
+    glass = Glass(driver.EPD(), fake_epdconfig)
+    session = Session(glass, strip, Buzzer(), ScriptedReader(tokens_per_second=12))
 
-    jobs = []
-    lock = threading.Lock()
+    import threading
 
-    def worker():
-        deck.start()
-        while True:
-            with lock:
-                job = jobs.pop(0) if jobs else None
-            if job is None:
-                time.sleep(0.01)
-                continue
-            job()
+    threading.Thread(target=session.start, daemon=True).start()
 
-    def submit(job):
-        with lock:
-            if not jobs:
-                jobs.append(job)
-
-    threading.Thread(target=worker, daemon=True).start()
-
-    controls.encoder.when_rotated_clockwise = lambda: deck.move(1)
-    controls.encoder.when_rotated_counter_clockwise = lambda: deck.move(-1)
-    controls.tick_left.when_pressed = lambda: submit(deck.back)
-    controls.tick_right.when_pressed = lambda: submit(deck.confirm)
+    controls.encoder.when_rotated_clockwise = lambda: session.post("turn", 1)
+    controls.encoder.when_rotated_counter_clockwise = lambda: session.post("turn", -1)
+    controls.tick_left.when_pressed = lambda: session.post("tick_left")
+    controls.tick_right.when_pressed = lambda: session.post("tick_right")
+    controls.touch.when_pressed = lambda: session.post("pad")
 
     clock = pygame.time.Clock()
-    held_since = None
     running = True
+    pump = threading.Thread(target=_pump_forever, args=(session,), daemon=True)
+    pump.start()
 
     while running:
         for event in pygame.event.get():
@@ -81,29 +75,34 @@ def main():
                     controls.press(controls.tick_left)
                 elif event.key == pygame.K_x:
                     controls.press(controls.tick_right)
-                elif event.key == pygame.K_SPACE and held_since is None:
-                    held_since = time.monotonic()
-                    window.touch_live = True
+                elif event.key == pygame.K_SPACE:
                     controls.touch_down()
+                    window.touch_live = session.state != "listen"
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_z:
                     controls.release(controls.tick_left)
                 elif event.key == pygame.K_x:
                     controls.release(controls.tick_right)
-                elif event.key == pygame.K_SPACE and held_since is not None:
+                elif event.key == pygame.K_SPACE:
                     controls.touch_up()
-                    window.touch_live = False
-                    held_since = None
-                    submit(deck.read)
 
-        if held_since is not None:
-            elapsed = time.monotonic() - held_since
-            submit(lambda: deck.listen(elapsed))
-
-        window.tick([deck.status, ""] + KEYS)
+        window.tick(_status(session, glass) + [""] + KEYS)
         clock.tick(60)
 
     pygame.quit()
+
+
+def _pump_forever(session):
+    while True:
+        session.pump()
+        time.sleep(0.02)
+
+
+def _status(session, glass):
+    return [
+        f"{session.state}  —  {session.status}",
+        f"{session.mode}   spread {session.spread}   partials left {glass.partials_left()}",
+    ]
 
 
 if __name__ == "__main__":

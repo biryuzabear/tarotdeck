@@ -16,9 +16,15 @@ BACK = (2640, 1760)
 REVEAL = (1320, 1760, 2200)
 
 
+_DEVICE = None
+
+
 class Buzzer:
     def __init__(self):
-        self.device = TonalBuzzer(pins.BUZZER, octaves=3)
+        global _DEVICE
+        if _DEVICE is None:
+            _DEVICE = TonalBuzzer(pins.BUZZER, octaves=3)
+        self.device = _DEVICE
         self.cache = {}
         self.muted = False
         try:

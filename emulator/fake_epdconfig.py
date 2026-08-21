@@ -1,9 +1,21 @@
-"""The eleven names epd3in7.py needs. Decodes the SPI stream back into an image."""
+"""The eleven names epd3in7.py needs, plus a model of the controller behind them.
+
+This is not a stub that swallows bytes. It keeps the two RAM planes the way the
+SSD1677 keeps them, remembers which mode `init` put the panel in, and rebuilds
+the visible image from the stream. That is what makes the emulator able to catch
+the mistake the panel would punish: a mono partial issued while four-grey data is
+still in the old-image plane, which on glass drives an arbitrary set of pixels in
+arbitrary directions rather than drawing text.
+
+`display_1Gray` writes only plane 0x24. Whether the controller then copies it into
+0x26 is undocumented, so `mirror_old_plane` does it explicitly and the emulator
+assumes nothing.
+"""
 
 import time
 
-from pins import EPD_BUSY, EPD_CS, EPD_DC, EPD_RST
 import waveform
+from pins import EPD_BUSY, EPD_CS, EPD_DC, EPD_RST
 
 RST_PIN = EPD_RST
 DC_PIN = EPD_DC
@@ -15,24 +27,49 @@ HEIGHT = 480
 LINE = WIDTH // 8
 PLANE = LINE * HEIGHT
 
-CMD_LUT = 0x32
+CMD_SLEEP = 0x10
+CMD_UPDATE = 0x20
+CMD_LATCH = 0x22
 CMD_PLANE_A = 0x24
 CMD_PLANE_B = 0x26
-CMD_UPDATE = 0x20
-CMD_SLEEP = 0x10
+CMD_LUT = 0x32
+CMD_OPTION = 0x37
+
+FOUR_GREY = "4gray"
+MONO = "mono"
 
 on_frame = None
+mirror_old_plane = True
 
 _dc = 1
 _command = None
-_plane_a = None
-_plane_b = None
+_pending = {}
+_ram_a = bytes([0xFF]) * PLANE
+_ram_b = bytes([0xFF]) * PLANE
 _lut = None
+_latch = None
+_mode = None
+_glass = None
 _busy_until = 0.0
 _asleep = False
 
+warnings = []
 
-def _lut_mode():
+
+def reset_warnings():
+    warnings.clear()
+
+
+def state():
+    return {
+        "mode": _mode,
+        "glass": _glass,
+        "asleep": _asleep,
+        "warnings": len(warnings),
+    }
+
+
+def _lut_name():
     from waveshare_epd.epd3in7 import EPD
 
     if _lut is None:
@@ -68,25 +105,42 @@ def _pair(byte_a, byte_b):
     return out
 
 
-def _decode():
-    if _plane_a is None:
-        return None
-    a = _plane_a
-    b = _plane_b if _plane_b is not None else _plane_a
-    n = min(PLANE, len(a), len(b))
-    return b"".join(_pair(a[i], b[i]) for i in range(n))
+def _decode(mono):
+    if mono:
+        return b"".join(_pair(_ram_a[i], _ram_a[i]) for i in range(PLANE))
+    return b"".join(_pair(_ram_a[i], _ram_b[i]) for i in range(PLANE))
 
 
 def _finish_update():
-    global _plane_a, _plane_b
-    duration, _ = waveform.parse(_lut)
-    steps = waveform.flash(_lut)
-    pixels = _decode()
-    _busy(duration)
-    if on_frame and pixels is not None:
-        on_frame(pixels, _lut_mode(), steps, duration)
-    _plane_a = None
-    _plane_b = None
+    global _ram_a, _ram_b, _glass
+    name = _lut_name()
+    mono = name in ("lut_1Gray_A2", "lut_1Gray_DU", "lut_1Gray_GC")
+    partial = name == "lut_1Gray_A2"
+
+    if partial and _glass == FOUR_GREY:
+        warnings.append(
+            "mono partial issued while four-grey data is still in the old-image "
+            "plane — on glass this drives arbitrary pixels, not text"
+        )
+    if mono and _mode == FOUR_GREY:
+        warnings.append(f"{name} sent while init(0) mode is latched")
+
+    wrote_b = CMD_PLANE_B in _pending
+    if CMD_PLANE_A in _pending:
+        _ram_a = bytes(_pending[CMD_PLANE_A][:PLANE].ljust(PLANE, b"\xff"))
+    if wrote_b:
+        _ram_b = bytes(_pending[CMD_PLANE_B][:PLANE].ljust(PLANE, b"\xff"))
+    elif mono and mirror_old_plane:
+        _ram_b = _ram_a
+
+    _pending.clear()
+
+    seconds, steps = waveform.parse(_lut)
+    flash = waveform.flash(_lut)
+    _glass = MONO if mono else FOUR_GREY
+    _busy(seconds or 0.05)
+    if on_frame:
+        on_frame(_decode(mono), name, flash, seconds)
 
 
 def _busy(seconds):
@@ -101,8 +155,11 @@ def module_init():
 
 
 def module_exit(cleanup=False):
-    global _asleep
+    global _asleep, _ram_a, _ram_b, _glass
     _asleep = True
+    _ram_a = bytes([0xFF]) * PLANE
+    _ram_b = bytes([0xFF]) * PLANE
+    _glass = None
 
 
 def digital_write(pin, value):
@@ -130,19 +187,25 @@ def spi_writebyte2(data):
 
 
 def _feed(data):
-    global _command, _plane_a, _plane_b, _lut
+    global _command, _lut, _latch, _mode
     if _dc == 0:
         for byte in data:
             _command = byte
             if _command == CMD_UPDATE:
                 _finish_update()
         return
-    if _command == CMD_PLANE_A:
-        _plane_a = bytes(data) if _plane_a is None else _plane_a + bytes(data)
-    elif _command == CMD_PLANE_B:
-        _plane_b = bytes(data) if _plane_b is None else _plane_b + bytes(data)
+    if _command in (CMD_PLANE_A, CMD_PLANE_B):
+        _pending[_command] = _pending.get(_command, bytearray()) + bytes(data)
     elif _command == CMD_LUT:
         _lut = bytes(data)
+    elif _command == CMD_LATCH:
+        _latch = data[0] if data else None
+    elif _command == CMD_OPTION:
+        _pending.setdefault("option", bytearray()).extend(data)
+        option = _pending["option"]
+        if len(option) >= 2:
+            _mode = FOUR_GREY if option[1] == 0x00 else MONO
+            _pending.pop("option", None)
 
 
 def asleep():

@@ -22,6 +22,7 @@ docs/MODEL.md          tarot LLM training pipeline reference
 docs/OS.md             operating system choice and its traps
 docs/RUNTIME.md        how the models fit and run on the Pi
 docs/UI.md             interaction and face layout
+docs/SESSION.md        the buildable session: states, prompt, reader, text on glass
 docs/PROGRESS.md       current state
 hardware/PINOUT.md     the 40-pin header, by BCM and board number
 emulator/              running the deck on a desktop, with no Pi
