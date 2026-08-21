@@ -23,6 +23,7 @@ SYSTEM_PROMPT = Path(__file__).resolve().parent.parent / "tarot_model" / "readin
 LOCAL_URL = os.environ.get("TAROTDECK_LOCAL_URL", "http://127.0.0.1:8080")
 LOCAL_CHAT_URL = os.environ.get("TAROTDECK_LOCAL_CHAT_URL", "")
 LOCAL_MODEL = os.environ.get("TAROTDECK_LOCAL_MODEL", "")
+LOCAL_NAME = os.environ.get("TAROTDECK_LOCAL_NAME", "")
 
 CLOUD_URL = os.environ.get("TAROTDECK_CLOUD_URL", "https://api.openai.com/v1")
 CLOUD_MODEL = os.environ.get("TAROTDECK_CLOUD_MODEL", "gpt-4o-mini")
@@ -55,16 +56,27 @@ def _reachable(url, timeout=1.0):
 
 
 def local():
-    if _reachable(LOCAL_URL + "/health"):
-        return HttpReader(LOCAL_URL, flavour=HttpReader.COMPLETION, name="llama-server")
-    if LOCAL_CHAT_URL and LOCAL_MODEL and _reachable(LOCAL_CHAT_URL.rsplit("/v1", 1)[0] + "/"):
+    """Chat endpoint first, and that ordering is a measured decision.
+
+    docs/SESSION.md argued for `llama-server`'s `/completion`, on the grounds that a
+    chat endpoint applies the GGUF's template and Qwen templates inject a system
+    turn the adapter never saw. Our own export says otherwise: fed the bare training
+    string it returns an empty completion, and its template injects no system turn
+    at all — the prompt begins straight at `<|im_start|>user`. The scaffolding is
+    part of what the adapter learned, so it has to be there.
+
+    No system prompt is sent either way. Every one of the 2000 training rows is a
+    bare (user, assistant) pair.
+    """
+    if LOCAL_CHAT_URL and LOCAL_MODEL and _reachable(LOCAL_CHAT_URL.rstrip("/") + "/models"):
         return HttpReader(
             LOCAL_CHAT_URL,
             flavour=HttpReader.CHAT,
             model=LOCAL_MODEL,
-            system_prompt=system_prompt(),
-            name=f"local {LOCAL_MODEL}",
+            name=LOCAL_NAME or "local model",
         )
+    if _reachable(LOCAL_URL + "/health"):
+        return HttpReader(LOCAL_URL, flavour=HttpReader.COMPLETION, name="llama-server")
     return None
 
 

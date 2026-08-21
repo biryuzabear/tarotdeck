@@ -42,7 +42,13 @@ from the training set. To put a real model behind it:
 # a llama-server on the loopback — what the device itself will run
 TAROTDECK_LOCAL_URL=http://127.0.0.1:8080 ./.venv/bin/python run.py
 
-# or Ollama, for a desk with no llama.cpp
+# our own fine-tune, served from MLX — the real thing
+M="$HOME/Library/CloudStorage/GoogleDrive-biryuzabear@gmail.com/My Drive/Projects/Tarot Device/qwen3_5_0.8b_v2_q8"
+../.mlx/bin/python -m mlx_lm.server --model "$M" --port 8081 &
+TAROTDECK_LOCAL_CHAT_URL=http://127.0.0.1:8081/v1 \
+TAROTDECK_LOCAL_MODEL="$M" TAROTDECK_LOCAL_NAME="tarot v2 q8" ./.venv/bin/python run.py
+
+# or Ollama, for anything else
 TAROTDECK_LOCAL_CHAT_URL=http://localhost:11434/v1 \
 TAROTDECK_LOCAL_MODEL=smollm2:1.7b ./.venv/bin/python run.py
 

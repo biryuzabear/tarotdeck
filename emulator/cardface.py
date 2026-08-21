@@ -17,15 +17,22 @@ large and central.
 **Court cards** are one large mark with rank bars beneath: Page one, Knight two,
 Queen three, King four.
 
-Suits are the four elemental triangles, which is the alchemical vocabulary the
-gravure style already speaks:
+Suits are four different silhouettes, not four variations on one. The elemental
+triangles were the first attempt and they were too alike: point-up against
+point-down reads, but barred against unbarred does not, and neither says wand or
+coin to anyone.
 
-| Suit | Element | Mark |
+| Suit | Mark | Silhouette |
 |---|---|---|
-| Wands | fire | triangle, point up |
-| Cups | water | triangle, point down |
-| Swords | air | triangle up, barred |
-| Pentacles | earth | triangle down, barred |
+| Wands | a rod with a knot at its head | a vertical line |
+| Cups | a chalice: bowl, stem, foot | an open bowl |
+| Swords | a blade with a crossguard | a cross |
+| Pentacles | a coin: circle with a star inside | a circle |
+
+Line, bowl, cross, circle — nothing in that set can be mistaken for another at any
+size the panel can draw. Each degrades rather than squeezes: below the size where
+the star inside a coin would close up it is dropped and the circle carries the suit
+alone, and a chalice too small for a foot keeps its bowl.
 
 The cog that used to sit at the centre of everything is gone. It was the same on
 every card, and being the largest thing on the plate it was all anyone saw.
@@ -61,8 +68,8 @@ RANKS = {
 }
 COURT = {"Page": 1, "Knight": 2, "Queen": 3, "King": 4}
 
-FIRE, WATER, AIR, EARTH = "fire", "water", "air", "earth"
-SUITS = {"Wands": FIRE, "Cups": WATER, "Swords": AIR, "Pentacles": EARTH}
+ROD, CUP, BLADE, COIN = "rod", "cup", "blade", "coin"
+SUITS = {"Wands": ROD, "Cups": CUP, "Swords": BLADE, "Pentacles": COIN}
 
 
 def identify(name):
@@ -82,24 +89,70 @@ def seed(name):
     return zlib.crc32(name.encode("utf-8"))
 
 
-def _triangle(cx, cy, r, down):
-    turn = math.pi / 2 if down else -math.pi / 2
-    return [
-        (cx + r * math.cos(turn + 2 * math.pi * k / 3), cy + r * math.sin(turn + 2 * math.pi * k / 3))
-        for k in range(3)
+def _mark(d, suit, cx, cy, r, width=1):
+    """One suit sign, drawn to fit `r` and to drop detail rather than crowd it."""
+    if suit == ROD:
+        _rod(d, cx, cy, r, width)
+    elif suit == CUP:
+        _cup(d, cx, cy, r, width)
+    elif suit == BLADE:
+        _blade(d, cx, cy, r, width)
+    else:
+        _coin(d, cx, cy, r, width)
+
+
+def _rod(d, cx, cy, r, width):
+    top, bottom = cy - r, cy + r
+    d.line([round(cx), round(top + r * 0.34), round(cx), round(bottom)], fill=INK, width=width + 1)
+    knot = max(2.0, r * 0.30)
+    d.ellipse(
+        [round(cx - knot), round(top), round(cx + knot), round(top + knot * 2)],
+        outline=INK, width=width,
+    )
+    if r >= 12:
+        d.line([round(cx - r * 0.34), round(bottom), round(cx + r * 0.34), round(bottom)], fill=INK, width=width)
+
+
+def _cup(d, cx, cy, r, width):
+    bowl = r * 0.92
+    top = cy - r * 0.55
+    d.arc(
+        [round(cx - bowl), round(top - bowl * 0.55), round(cx + bowl), round(top + bowl * 1.05)],
+        0, 180, fill=INK, width=width + 1,
+    )
+    d.line([round(cx - bowl), round(top), round(cx + bowl), round(top)], fill=INK, width=width)
+    d.line([round(cx), round(top + bowl * 0.95), round(cx), round(cy + r * 0.72)], fill=INK, width=width)
+    if r >= 11:
+        foot = r * 0.52
+        d.line(
+            [round(cx - foot), round(cy + r * 0.78), round(cx + foot), round(cy + r * 0.78)],
+            fill=INK, width=width + 1,
+        )
+
+
+def _blade(d, cx, cy, r, width):
+    d.line([round(cx), round(cy - r), round(cx), round(cy + r)], fill=INK, width=width + 1)
+    guard = cy - r * 0.34
+    half = r * 0.72
+    d.line([round(cx - half), round(guard), round(cx + half), round(guard)], fill=INK, width=width + 1)
+    if r >= 12:
+        tip = r * 0.26
+        d.line([round(cx - tip), round(cy + r - tip), round(cx), round(cy + r)], fill=INK, width=width)
+        d.line([round(cx + tip), round(cy + r - tip), round(cx), round(cy + r)], fill=INK, width=width)
+
+
+def _coin(d, cx, cy, r, width):
+    d.ellipse([round(cx - r), round(cy - r), round(cx + r), round(cy + r)], outline=INK, width=width + 1)
+    if r < 11:
+        return
+    star = r * 0.66
+    pts = [
+        (cx + star * math.cos(-math.pi / 2 + 2 * math.pi * k / 5),
+         cy + star * math.sin(-math.pi / 2 + 2 * math.pi * k / 5))
+        for k in range(5)
     ]
-
-
-def _mark(d, element, cx, cy, r, width=1):
-    down = element in (WATER, EARTH)
-    barred = element in (AIR, EARTH)
-    pts = _triangle(cx, cy, r, down)
-    d.line([(round(x), round(y)) for x, y in pts] + [(round(pts[0][0]), round(pts[0][1]))],
-           fill=INK, width=width)
-    if barred:
-        y = cy + (-r * 0.22 if down else r * 0.22)
-        half = r * 0.60
-        d.line([round(cx - half), round(y), round(cx + half), round(y)], fill=INK, width=width)
+    order = [pts[(k * 2) % 5] for k in range(5)]
+    _stroke(d, order, INK, width)
 
 
 def _ring_positions(count, cx, cy, radius, turned=False):
@@ -188,7 +241,7 @@ def face(name, w, h, turned=False):
     rand = gravure.rng(seed(name))
 
     cx, cy = w / 2, h * 0.5
-    r = min(w * 0.36, h * 0.24)
+    r = min(w * 0.30, h * 0.20)
 
     if kind == "major":
         _major(d, value, cx, cy, r, rand, turned)
@@ -202,19 +255,61 @@ def face(name, w, h, turned=False):
 
 
 def _wires(d, w, h, cx, cy, r, rand, majors):
-    """The PCB runs that place the figure in the gravure world. Kept to the
-    margins so they never cross the thing the card is trying to say."""
+    """The board the figure sits on.
+
+    The suit sign says what the card is; this says what world it is in. It gets the
+    room the figure gives up — the sign is drawn smaller than it could be so the
+    wiring has somewhere to live rather than being crammed into the corners.
+
+    Four things, in the order they are laid: a border trace inset from the frame
+    with 45-degree corners, the way a real ground pour is drawn; bundles entering
+    from the edges and stopping at a via short of the figure, never touching it;
+    test points scattered where nothing else is; and, on majors only, a second
+    border ring, which is the quietest way to say trump twice.
+    """
     prims = []
-    via = 4
     gap = gravure.MIN_GAP
-    for corner in range(4):
-        left = corner % 2 == 0
-        top = corner < 2
-        y = (0.07 + rand() * 0.06) * h if top else (0.93 - rand() * 0.06) * h
-        x_end = (0.10 + rand() * 0.10) * w if left else (0.90 - rand() * 0.10) * w
-        drop = (10 + rand() * 16) * (1 if top else -1)
-        if abs(y - cy) < r + gap * 2 or abs(y + drop - cy) < r + gap * 2:
+    via = 4.0
+    keepout = r + gap * 2.5
+
+    inset = max(14.0, w * 0.075)
+    chamfer = inset * 0.9
+    _border(prims, inset, inset, w - inset, h - inset, chamfer)
+    if majors:
+        step = gap * 1.6
+        _border(prims, inset + step, inset + step, w - inset - step, h - inset - step, chamfer * 0.8)
+
+    for i in range(4):
+        left = i % 2 == 0
+        top = i < 2
+        y = cy + (-1 if top else 1) * (keepout + gap * (2 + rand() * 3))
+        if not (inset + gap < y < h - inset - gap):
             continue
-        pts = gravure._run(-gap if left else w + gap, y, x_end, y + drop, r * 0.4)
-        gravure._bundle(prims, pts, 2 if majors else 1, gap, via)
+        edge_x = -gap if left else w + gap
+        stop_x = cx + (-1 if left else 1) * (keepout + gap * (1 + rand()))
+        if not (inset < stop_x < w - inset):
+            continue
+        turn = (rand() - 0.5) * gap * 4
+        pts = gravure._run(edge_x, y, stop_x, y + turn, r * 0.45)
+        gravure._bundle(prims, pts, 1 + int(rand() * 3), gap, via)
+
+    for _ in range(5):
+        px = inset + gap + rand() * (w - 2 * (inset + gap))
+        py = inset + gap + rand() * (h - 2 * (inset + gap))
+        if math.hypot(px - cx, py - cy) < keepout + gap * 2:
+            continue
+        prims.append(("circle", (px, py), via * 0.8))
+        prims.append(("circle", (px, py), via * 0.35))
+
     gravure.render(d, prims, (0, 0), FAINT)
+
+
+def _border(prims, x0, y0, x1, y1, chamfer):
+    """A rectangle with its corners cut at 45 degrees. No trace turns square."""
+    pts = [
+        (x0 + chamfer, y0), (x1 - chamfer, y0), (x1, y0 + chamfer),
+        (x1, y1 - chamfer), (x1 - chamfer, y1), (x0 + chamfer, y1),
+        (x0, y1 - chamfer), (x0, y0 + chamfer),
+    ]
+    for a, b in zip(pts, pts[1:] + pts[:1]):
+        prims.append(("line", a, b))

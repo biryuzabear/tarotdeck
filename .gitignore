@@ -16,3 +16,4 @@ __pycache__/
 *.FCStd
 emulator/.venv/
 emulator/fonts/
+.mlx/

@@ -99,6 +99,14 @@ class HttpReader(Reader):
     and where the text sits in each event — so those are the only things that vary
     here, and there is no adapter layer.
 
+    **A reasoning model's `<think>` block is dropped, not shown.** Our own export
+    opens one and closes it immediately, so its output begins `</think>` before a
+    word of the reading; anything reading the stream has to swallow that. Output is
+    held back until the closing tag arrives, and released wholesale if it never
+    does — at a threshold, and again when the stream ends — so a server that strips
+    the block itself is not swallowed whole by a reader waiting for a tag that will
+    never come.
+
     Deliberately `urllib` from the standard library and no SDK. The Pi's Python
     situation is awkward enough without a dependency that has to be built, and the
     whole client is a POST and a loop.
@@ -114,6 +122,9 @@ class HttpReader(Reader):
     COMPLETION = "completion"
     CHAT = "chat"
 
+    THINK_CLOSE = "</think>"
+    THINK_GIVE_UP = 400
+
     def __init__(
         self,
         base_url,
@@ -125,6 +136,7 @@ class HttpReader(Reader):
         temperature=0.9,
         timeout=120,
         name=None,
+        strip_think=True,
     ):
         self.base_url = base_url.rstrip("/")
         self.flavour = flavour
@@ -135,6 +147,7 @@ class HttpReader(Reader):
         self.temperature = temperature
         self.timeout = timeout
         self.name = name or flavour
+        self.strip_think = strip_think
 
     def _request(self, prompt):
         if self.flavour == self.COMPLETION:
@@ -182,6 +195,8 @@ class HttpReader(Reader):
         except OSError as exc:
             raise ReaderError(f"{self.name}: {exc}") from exc
 
+        thinking = self.strip_think
+        held = ""
         try:
             for raw in response:
                 if cancel is not None and cancel.is_set():
@@ -191,14 +206,32 @@ class HttpReader(Reader):
                     continue
                 body = line[5:].strip()
                 if body == "[DONE]":
-                    return
+                    break
                 try:
                     event = json.loads(body)
                 except ValueError:
                     continue
                 text = self._text(event, self.flavour)
-                if text:
-                    yield normalize(text)
+                if not text:
+                    continue
+                text = normalize(text)
+                if not thinking:
+                    yield text
+                    continue
+                held += text
+                cut = held.find(self.THINK_CLOSE)
+                if cut >= 0:
+                    thinking = False
+                    tail = held[cut + len(self.THINK_CLOSE) :].lstrip("\n")
+                    held = ""
+                    if tail:
+                        yield tail
+                elif len(held) > self.THINK_GIVE_UP:
+                    thinking = False
+                    yield held
+                    held = ""
+            if held:
+                yield held
         except OSError as exc:
             raise ReaderError(f"{self.name}: {exc}") from exc
         finally:
