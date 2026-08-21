@@ -210,6 +210,12 @@ row is one menu line, and the rows are big enough to read at arm's length.
 Three items also means Settings has no slot in the list. It is reached by ticking
 the left gear back from the top menu, where there is otherwise nowhere to go.
 
+Settings holds exactly three: **Sound**, **Mode** and **Style**. It used to hold a
+*Back* row, which was waste — the left gear is back everywhere on the device, so a
+row spent saying so bought nothing and cost the third slot. Style chooses how a card
+is drawn; there is one for now and the list is a registry, so a second is one entry
+and no other change.
+
 The buzzer clicks on every scroll step, in step with the light.
 
 ## The gravure ornament

@@ -17,6 +17,7 @@ import queue
 import threading
 import time
 
+import cardface
 import layout
 import readers
 import screens
@@ -65,6 +66,7 @@ class Session:
         self.state = None
         self.index = 0
         self.mode = MODES[0]
+        self.style = 0
         self.spread = 1
         self.cards = []
         self.question = ""
@@ -101,7 +103,7 @@ class Session:
             "settings": [
                 ("Sound", "on" if not self.buzzer.muted else "off"),
                 ("Mode", self.mode),
-                ("Back", "-"),
+                ("Style", cardface.style_names()[self.style].lower()),
             ],
             "confirm": CONFIRM_ITEMS,
             "trouble": TROUBLE_ITEMS,
@@ -185,7 +187,7 @@ class Session:
         self.buzzer.sequence((1320, 1760), 40)
         for i, (name, orientation) in enumerate(self.cards, 1):
             self.strip.position(i - 1, of=len(self.cards))
-            self.glass.full(screens.card(name, orientation, i, len(self.cards)))
+            self.glass.full(screens.card(name, orientation, i, len(self.cards), style=self.style))
         self.enter("hold")
 
     def _enter_hold(self):
@@ -235,8 +237,7 @@ class Session:
             elif self.index == 1:
                 self.mode = MODES[(MODES.index(self.mode) + 1) % len(MODES)]
             else:
-                self.enter("spread")
-                return
+                self.style = (self.style + 1) % len(cardface.STYLES)
             self.glass.mono_partial(screens.menu("SETTINGS", self._items(), "", 909, ornamented=False))
         elif self.state == "confirm":
             if self.index == 0:

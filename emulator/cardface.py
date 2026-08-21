@@ -233,7 +233,7 @@ def _court(d, element, rank, cx, cy, r, turned=False):
         d.line([round(x - half), round(y), round(x + half), round(y)], fill=INK, width=3)
 
 
-def face(name, w, h, turned=False):
+def gravure_face(name, w, h, turned=False):
     img = Image.new("L", (w, h), PAPER)
     d = ImageDraw.Draw(img)
     d.fontmode = "1"
@@ -313,3 +313,24 @@ def _border(prims, x0, y0, x1, y1, chamfer):
     ]
     for a, b in zip(pts, pts[1:] + pts[:1]):
         prims.append(("line", a, b))
+
+
+STYLES = [("Gravure", gravure_face)]
+"""Card styles, in menu order.
+
+One for now. A style is a name and a function with `face`'s signature, so adding
+another is one entry here and nothing else — the settings menu, the session and the
+card screen all read this list rather than knowing any style by name.
+
+The obvious second entry is real art: a function that loads `cards/<slug>.png` off
+the device and falls back to the drawn face when a plate is missing.
+"""
+
+
+def style_names():
+    return [name for name, _ in STYLES]
+
+
+def face(name, w, h, turned=False, style=0):
+    _, draw = STYLES[style % len(STYLES)]
+    return draw(name, w, h, turned)

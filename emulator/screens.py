@@ -127,7 +127,7 @@ def confirm(transcript, items):
 card_seed = cardface.seed
 
 
-def card(name, orientation, index, total, plate=None):
+def card(name, orientation, index, total, plate=None, style=0):
     """One card, full width. A reversed plate is turned; its name is not."""
     img = _canvas()
     x0, y0, w, h = layout.CARD_RECT
@@ -135,7 +135,7 @@ def card(name, orientation, index, total, plate=None):
     if plate is not None:
         face = plate.rotate(180) if turned else plate
     else:
-        face = cardface.face(name, w, h, turned=turned)
+        face = cardface.face(name, w, h, turned=turned, style=style)
     img.paste(face, (x0, y0))
     d = _draw(img)
     d.rectangle([x0, y0, x0 + w - 1, y0 + h - 1], outline=INK, width=2)
