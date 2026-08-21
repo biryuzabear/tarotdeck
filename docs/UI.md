@@ -249,6 +249,34 @@ Two rules keep it legible on glass rather than in a browser:
   line lands as mid-grey on a four-level panel, which was exactly the mush the
   first attempt produced.
 
+## Card faces — drawn from what the card is
+The first attempt drew one figure on all 78 and varied only the noise, so a deck of
+them was unreadable. The face now carries the card's identity, and three families
+come out different at a glance.
+
+**Majors** carry no suit mark. A double outer ring says trump, and the figure is
+built from the card's own number: an n-gon of that order with its diagonals against
+a counter-rotated second.
+
+**Numbered minors are counted.** The rank is that many suit marks on a ring, linked
+by the polygon that joins them, so Five of Cups is five marks in a pentagon and can
+be counted without reading the name. An Ace is one mark, large and central.
+
+**Courts** are one large mark with rank bars beneath: Page one, Knight two, Queen
+three, King four.
+
+**Suits are the four elemental triangles** — the alchemical vocabulary the gravure
+style already speaks. Wands is fire, a triangle point up; Cups is water, point down;
+Swords is air, up and barred; Pentacles is earth, down and barred.
+
+**A reversed card turns its composition, never its marks.** Rotating the finished
+plate was the obvious way to show a reversal and it was wrong: the four triangles
+map onto each other under 180 degrees, so a reversed Swords read as Pentacles. The
+turn is applied to where the marks sit while each mark stays the right way up.
+
+The cog that used to sit at the centre of every plate is gone. It was identical on
+all 78 and, being the largest thing there, it was all anyone saw.
+
 ## Open
 - What two- and three-card spreads are *for*
 - Where one, two and three cards sit on a 280 x 480 screen

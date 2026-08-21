@@ -12,8 +12,7 @@ in ink alone.
 
 from PIL import Image, ImageDraw
 
-import zlib
-
+import cardface
 import gravure
 import layout
 import typeset
@@ -125,20 +124,18 @@ def confirm(transcript, items):
     return img
 
 
-def card_seed(name):
-    """Stable across runs and machines. `hash()` is not — Python randomises the
-    hash of a string per process, so the same card would wear a different face
-    every time the deck was switched on."""
-    return zlib.crc32(name.encode("utf-8"))
+card_seed = cardface.seed
 
 
 def card(name, orientation, index, total, plate=None):
     """One card, full width. A reversed plate is turned; its name is not."""
     img = _canvas()
     x0, y0, w, h = layout.CARD_RECT
-    face = plate if plate is not None else gravure.ornament(w, h, card_seed(name))
-    if orientation == "reversed":
-        face = face.rotate(180)
+    turned = orientation == "reversed"
+    if plate is not None:
+        face = plate.rotate(180) if turned else plate
+    else:
+        face = cardface.face(name, w, h, turned=turned)
     img.paste(face, (x0, y0))
     d = _draw(img)
     d.rectangle([x0, y0, x0 + w - 1, y0 + h - 1], outline=INK, width=2)
