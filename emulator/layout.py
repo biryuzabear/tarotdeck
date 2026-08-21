@@ -26,53 +26,58 @@ READ_ROWS = 22
 FOOTER_H = 26
 FOOTER_Y = H - FOOTER_H
 
-CARD_STRIP_TOP = 0
-CARD_STRIP_H = H // 2
-CARD_STRIP_GAP = 6
+MARGIN = 16
+"""One margin for everything.
 
-FRAME_TOP = CARD_STRIP_TOP + CARD_STRIP_H + 6
-FRAME_PAD = 10
-READ_ROWS_WITH_CARDS = (FOOTER_Y - 8 - FRAME_TOP - 2 * FRAME_PAD) // READ_LEADING
+There used to be four — the card strip bled to the edge, the text frame inset 12,
+the text inset 10 again inside that, and the footer sat on 16 — which is what made
+the screen read as assembled rather than designed. Cards, names, rule, text and
+footer now all begin and end on this line.
+"""
 
-
+CARD_GAP = 8
+CARD_BAND = 196
+CARD_BAND_SINGLE = 210
 ASPECT = 1.714
 
+NAME_STEP = 18
+RULE_GAP = 4
+TEXT_GAP = 16
+FOOTER_H = 20
 
-def card_strip(count):
-    """Where the drawn cards sit while the reading is being read.
 
-    They take the top half of the glass and run edge to edge, right out to the lit
-    chamfers with no margin of their own, because the card is what the reading is
-    about and half the screen is what that is worth. They do not go away when the
-    words arrive.
+def card_row(count):
+    """The drawn cards, side by side between the margins, as large as the band allows.
 
-    One card is as tall as the half allows. Two share the width. Three side by side
-    would be fingernails, so they overlap into a shallow cascade instead, which
-    buys each of them half again the width at the cost of hiding a strip of the two
-    behind.
+    A row rather than a cascade: nothing overlaps, so every card is whole and every
+    name in the list below has a plate you can actually look at. It costs size —
+    three across come to 13 mm each — and that is the price of all three being
+    legible at once rather than two of them being edges.
     """
     count = max(1, min(3, count))
-    band = CARD_STRIP_H
-    if count == 1:
-        height = band
-        width = round(height / ASPECT)
-        return [((W - width) // 2, CARD_STRIP_TOP, width, height)]
-    if count == 2:
-        width = (W - CARD_STRIP_GAP) // 2
-        height = min(band, round(width * ASPECT))
-        width = round(height / ASPECT)
-        total = 2 * width + CARD_STRIP_GAP
-        x = (W - total) // 2
-        y = CARD_STRIP_TOP + (band - height) // 2
-        return [(x, y, width, height), (x + width + CARD_STRIP_GAP, y, width, height)]
-    step = 62
-    width = W - 2 * step
-    height = min(band - 24, round(width * ASPECT))
+    band = CARD_BAND_SINGLE if count == 1 else CARD_BAND
+    width = (W - 2 * MARGIN - (count - 1) * CARD_GAP) // count
+    height = min(band, round(width * ASPECT))
     width = round(height / ASPECT)
-    total_w = width + 2 * step
-    x = (W - total_w) // 2
-    y = CARD_STRIP_TOP + (band - height - 24) // 2
-    return [(x + i * step, y + i * 12, width, height) for i in range(3)]
+    total = count * width + (count - 1) * CARD_GAP
+    x = (W - total) // 2
+    return [(x + i * (width + CARD_GAP), MARGIN, width, height) for i in range(count)]
+
+
+def names_top(count):
+    return MARGIN + card_row(count)[0][3] + 18
+
+
+def rule_y(count):
+    return names_top(count) + NAME_STEP * count + RULE_GAP
+
+
+def text_top(count):
+    return rule_y(count) + TEXT_GAP
+
+
+def text_rows(count):
+    return (H - MARGIN - FOOTER_H - text_top(count)) // READ_LEADING
 
 
 def draw_order(count, front):
@@ -88,8 +93,7 @@ def draw_order(count, front):
     shuffled rather than dealt.
     """
     front = max(0, min(count - 1, front))
-    rest = sorted((i for i in range(count) if i != front), reverse=True)
-    return rest + [front]
+    return [i for i in range(count) if i != front] + [front]
 
 CARD_RECT = (16, 8, 248, 424)
 CARD_NAME_Y = 448

@@ -32,6 +32,7 @@ HINT = typeset.font("Regular", 12)
 BODY = typeset.font("Text", 15)
 SMALL = typeset.font("Regular", 12)
 CARD_NAME = typeset.font("SemiBold", 20)
+NAME_LIST = typeset.font("SemiBold", 12)
 
 def _tone(mono, level):
     """A grey, or ink if this frame is going out in mono."""
@@ -201,41 +202,54 @@ def _name_on_plate(d, x, y, w, h, name):
 
 
 def reading(lines, page, pages, cards=(), deck=None, style=0, front=0, language="en"):
-    """The cards stay. They shrink to a strip across the top and remain there while
-    the words arrive, because a reading you cannot see the cards for is a reading
-    about nothing. The text lives in a frame below them.
+    """The cards, their names listed under them, a rule, and the reading.
 
-    Everything here is ink on paper: this screen is sent in mono, where any grey
-    would come out white.
+    Everything sits on one margin and nothing is boxed: the reading is on the page,
+    not in a frame. The names are set one under another rather than across, because
+    three of them never fit on a line at any size worth reading — and a list of what
+    was dealt is what it is.
+
+    The card the current page is about is marked with a bar beside its name. In a
+    row nothing overlaps, so there is no front card to bring forward; the mark is
+    what carries that from the cascade it replaced.
+
+    Everything here is ink on paper: this screen is sent in mono, where a grey would
+    come out white.
     """
     t = strings.translator(language)
+    count = len(cards)
     footer = ""
     if pages > 1:
         footer = t("{page} of {pages}", page=page, pages=pages)
         footer += "   " + (t("turn the gear") if page < pages else t("tick to seal"))
 
-    top = layout.FRAME_TOP + layout.FRAME_PAD if cards else layout.READ_TOP
-    rows = layout.READ_ROWS_WITH_CARDS if cards else layout.READ_ROWS
-    img = typeset.page_image(
-        lines, (W, H), footer=footer or None,
-        top=top, left=layout.MARGIN + layout.FRAME_PAD if cards else typeset.MARGIN_X,
-        rows=rows,
-    )
     if not cards:
-        return img
+        return typeset.page_image(lines, (W, H), footer=footer or None)
 
-    d = _draw(img)
-    plates = layout.card_strip(len(cards))
-    for index in layout.draw_order(len(cards), front):
-        x, y, cw, ch = plates[index]
-        name = cards[index][0]
-        img.paste(cardface.face(name, cw, ch, style=style, wires=False), (x, y))
-        d.rectangle([x, y, x + cw - 1, y + ch - 1], outline=INK, width=2)
-        _name_on_plate(d, x, y, cw, ch, deck.localize(name) if deck else name)
-    d.rectangle(
-        [layout.MARGIN, layout.FRAME_TOP, W - layout.MARGIN, layout.FOOTER_Y - 8],
-        outline=INK, width=1,
+    img = typeset.page_image(
+        lines, (W, H),
+        top=layout.text_top(count), left=layout.MARGIN, rows=layout.text_rows(count),
     )
+    d = _draw(img)
+
+    for rect, (name, _orientation) in zip(layout.card_row(count), cards):
+        x, y, cw, ch = rect
+        img.paste(cardface.face(name, cw, ch, style=style, wires=cw > 110), (x, y))
+        d.rectangle([x, y, x + cw - 1, y + ch - 1], outline=INK, width=2)
+
+    y = layout.names_top(count)
+    for index, (name, _orientation) in enumerate(cards):
+        label = (deck.localize(name) if deck is not None else name).upper()
+        if count > 1 and index == front:
+            d.rectangle([layout.MARGIN, y + 2, layout.MARGIN + 3, y + 11], fill=INK)
+        d.text((layout.MARGIN + (10 if count > 1 else 0), y), label, font=NAME_LIST, fill=INK)
+        y += layout.NAME_STEP
+
+    rule = layout.rule_y(count)
+    d.line([(layout.MARGIN, rule), (W - layout.MARGIN, rule)], fill=INK, width=1)
+
+    if footer:
+        d.text((layout.MARGIN, H - layout.MARGIN - 11), footer, font=SMALL, fill=INK)
     return img
 
 

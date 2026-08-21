@@ -416,7 +416,7 @@ class Session:
             take, self.pending = self.pending[:step], self.pending[step:]
             self.lines.extend(take)
             was = len(self.pages)
-            self.pages = typeset.paginate(self.lines, layout.READ_ROWS_WITH_CARDS)
+            self.pages = typeset.paginate(self.lines, layout.text_rows(len(self.cards)))
             if self.page == len(self.pages) - 1 and len(self.pages) == was:
                 self.glass.mono_partial(self._page_image())
             elif len(self.pages) != was:
@@ -424,7 +424,7 @@ class Session:
 
     def _front_card(self):
         """The card the words on this page are about."""
-        rows = layout.READ_ROWS_WITH_CARDS
+        rows = layout.text_rows(len(self.cards))
         first = self.page * rows
         marks = self.stream.line_card if self.stream else []
         if not marks:

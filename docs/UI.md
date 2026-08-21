@@ -318,6 +318,19 @@ subset of what it learned rather than a shape it has never seen.
 The cog that used to sit at the centre of every plate is gone. It was identical on
 all 78 and, being the largest thing there, it was all anyone saw.
 
+## One margin, and no frame
+The reading screen had four margins — the card strip bled to the edge, the text
+frame inset 12, the text inset 10 again inside that, and the footer sat on 16 —
+which is what made it read as assembled rather than designed. There is one now, 16
+px, 2.7 mm on the glass, and cards, names, rule, text and footer all begin and end
+on it. Nothing is boxed: the reading sits on the page.
+
+The cards are a row, not a cascade, so all of them are whole. Their names are listed
+one under another beneath them, without separators, because three names never fit
+across 248 px at any size worth reading and a list of what was dealt is what it is.
+Three across costs 13 mm a card, and that is the price of all three being legible at
+once rather than two of them being edges.
+
 ## The cards follow the reading
 The plates do not go away when the words arrive, and they do not sit still either.
 The card the current page is talking about is the one nothing overlaps.
