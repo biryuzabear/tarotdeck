@@ -393,8 +393,8 @@ class Session:
         if self.state == "hold":
             self.enter("read")
         self._flush_lines(final=True)
-        self.status = "read it, then tick to seal"
-        self.strip.position(self.page, of=len(self.pages))
+        self.status = f"read it - {len(self.pages)} pages, tick to seal"
+        self._mark_pages()
 
     def _on_failed(self, message):
         if self.state == "hearing":
@@ -405,17 +405,23 @@ class Session:
     # -------------------------------------------------------------------- pages
 
     def _flush_lines(self, final=False):
+        """Append what has arrived, and never turn the page by itself.
+
+        A page that turns itself takes the last lines away from someone still on
+        them, and there is no way to ask for them back that does not cost a full
+        refresh. So words land while there is room on the page being read, and
+        wait quietly on the pages behind it.
+        """
         step = max(1, timings.LINES_PER_PARTIAL)
         while len(self.pending) >= step or (final and self.pending):
             take, self.pending = self.pending[:step], self.pending[step:]
             self.lines.extend(take)
+            was = len(self.pages)
             self.pages = typeset.paginate(self.lines, layout.READ_ROWS_WITH_CARDS)
-            if len(self.pages) - 1 > self.page:
-                self.page = len(self.pages) - 1
-                self.glass.mono_full(self._page_image())
-            else:
+            if self.page == len(self.pages) - 1 and len(self.pages) == was:
                 self.glass.mono_partial(self._page_image())
-            self.strip.position(self.page, of=len(self.pages))
+            elif len(self.pages) != was:
+                self._mark_pages()
 
     def _page_image(self):
         page = self.pages[self.page] if self.page < len(self.pages) else []
@@ -426,7 +432,14 @@ class Session:
 
     def _show_page(self):
         self.glass.mono_full(self._page_image())
-        self.strip.position(self.page, of=len(self.pages))
+        self._mark_pages()
+
+    def _mark_pages(self):
+        """The lit lens is the page you are on, the dim ones are pages that exist.
+        While the reading is still arriving they keep growing under your hand."""
+        self.strip.position(
+            min(self.page, self.strip.rows - 1), of=min(len(self.pages), self.strip.rows)
+        )
 
     # --------------------------------------------------------------------- pump
 
@@ -448,7 +461,10 @@ class Session:
             self.strip.filling(elapsed / LISTEN_CAP)
             if elapsed >= LISTEN_CAP or self.ears.silent_for() >= ears_module.SILENCE_HOLD:
                 self.enter("hearing")
-        elif self.state in ("hearing", "hold"):
+        elif self.state == "hearing":
             self.travel += 1
-            self.strip.travelling(self.travel // (8 if self.state == "hearing" else 24))
+            self.strip.travelling(self.travel // 8)
+        elif self.state in ("hold", "read") and not self.status.startswith("read it"):
+            self.travel += 1
+            self.strip.shimmer(self.travel)
         return handled

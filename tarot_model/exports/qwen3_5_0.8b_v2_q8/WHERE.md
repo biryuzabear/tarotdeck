@@ -28,9 +28,19 @@ Two consequences, both corrections to docs/SESSION.md §4:
   `/completion`. The spec chose `/completion` to stop a template injecting a system
   turn; this template injects none — the prompt begins straight at
   `<|im_start|>user` — so the reason does not apply to this export.
-- The template opens a `<think>` block, and the model closes it immediately and
-  writes the reading after. Its output therefore begins `</think>\n\n`. Anything
-  reading the stream has to drop everything up to and including that tag.
+- The template opens a `<think>` block, and what happens next decides where the
+  reading lands. Sometimes the model closes it immediately and writes the reading
+  after, so the output begins `</think>` and the text arrives in `content`. More
+  often it does not close it at all, and a server that understands reasoning models
+  files the entire answer under `reasoning` instead — **measured: two responses in
+  three came back with `content` empty and a couple of hundred events of
+  `reasoning`**, which on the glass was a reading that simply never appeared.
+
+  The adapter does not reason. The block is scaffolding it was trained through. So
+  a client must read whichever field carries text — `content`, `reasoning` or
+  `reasoning_content` — and strip the tag if it is there. Sending
+  `chat_template_kwargs: {"enable_thinking": false}` helps where the server honours
+  it, but the field fallback is what actually makes it reliable.
 
 ## Measured, on this Mac
 

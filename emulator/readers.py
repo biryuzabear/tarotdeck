@@ -167,14 +167,25 @@ class HttpReader(Reader):
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "stream": True,
+            "chat_template_kwargs": {"enable_thinking": False},
         }
 
     @staticmethod
     def _text(event, flavour):
+        """Take the reading from wherever the server decided to put it.
+
+        Our own export's chat template opens a `<think>` block, and a server that
+        understands reasoning models therefore files the whole answer under
+        `reasoning` rather than `content` — measured: two responses in three came
+        back with `content` empty and 286 events of `reasoning`, which is what an
+        empty reading on the glass actually was. The adapter does not reason; the
+        block is scaffolding it was trained through. So whichever field carries
+        text, that is the reading.
+        """
         if flavour == HttpReader.COMPLETION:
             return event.get("content", "")
-        choices = event.get("choices") or [{}]
-        return (choices[0].get("delta") or {}).get("content") or ""
+        delta = ((event.get("choices") or [{}])[0].get("delta")) or {}
+        return delta.get("content") or delta.get("reasoning") or delta.get("reasoning_content") or ""
 
     def stream(self, prompt, cancel=None):
         import json

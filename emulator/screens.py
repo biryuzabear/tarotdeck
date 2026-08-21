@@ -210,12 +210,6 @@ def reading(lines, page, pages, cards=(), deck=None, style=0):
         )
         img.paste(plate, (x, y))
         d.rectangle([x, y, x + cw - 1, y + ch - 1], outline=INK, width=2)
-    if len(cards) == 1 and deck is not None:
-        x, y, cw, ch = layout.card_strip(1)[0]
-        name, orientation = cards[0]
-        d.text((x + cw + 14, y + ch // 2 - 10), deck.localize(name), font=BODY, fill=INK)
-        d.text((x + cw + 14, y + ch // 2 + 12), orientation, font=SMALL, fill=INK)
-
     d.rectangle(
         [layout.MARGIN, layout.FRAME_TOP, W - layout.MARGIN, layout.FOOTER_Y - 8],
         outline=INK, width=1,

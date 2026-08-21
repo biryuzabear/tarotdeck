@@ -26,31 +26,53 @@ READ_ROWS = 22
 FOOTER_H = 26
 FOOTER_Y = H - FOOTER_H
 
-CARD_STRIP_TOP = 8
-CARD_STRIP_H = 140
+CARD_STRIP_TOP = 0
+CARD_STRIP_H = H // 2
 CARD_STRIP_GAP = 6
 
-FRAME_TOP = CARD_STRIP_TOP + CARD_STRIP_H + 10
+FRAME_TOP = CARD_STRIP_TOP + CARD_STRIP_H + 6
 FRAME_PAD = 10
 READ_ROWS_WITH_CARDS = (FOOTER_Y - 8 - FRAME_TOP - 2 * FRAME_PAD) // READ_LEADING
 
 
-def card_strip(count):
-    """Where each drawn card sits while the reading is being read.
+ASPECT = 1.714
 
-    The cards do not go away when the words arrive. They shrink to a strip across
-    the top and stay there, because a reading you cannot see the cards for is a
-    reading about nothing.
+
+def card_strip(count):
+    """Where the drawn cards sit while the reading is being read.
+
+    They take the top half of the glass and run edge to edge, right out to the lit
+    chamfers with no margin of their own, because the card is what the reading is
+    about and half the screen is what that is worth. They do not go away when the
+    words arrive.
+
+    One card is as tall as the half allows. Two share the width. Three side by side
+    would be fingernails, so they overlap into a shallow cascade instead, which
+    buys each of them half again the width at the cost of hiding a strip of the two
+    behind.
     """
     count = max(1, min(3, count))
-    gap = CARD_STRIP_GAP
-    width = (W - 2 * MARGIN - (count - 1) * gap) // count
-    height = min(CARD_STRIP_H, round(width * 1.714))
-    width = round(height / 1.714)
-    total = count * width + (count - 1) * gap
-    x = (W - total) // 2
-    y = CARD_STRIP_TOP + (CARD_STRIP_H - height) // 2
-    return [(x + i * (width + gap), y, width, height) for i in range(count)]
+    band = CARD_STRIP_H
+    if count == 1:
+        height = band
+        width = round(height / ASPECT)
+        return [((W - width) // 2, CARD_STRIP_TOP, width, height)]
+    if count == 2:
+        width = (W - CARD_STRIP_GAP) // 2
+        height = min(band, round(width * ASPECT))
+        width = round(height / ASPECT)
+        total = 2 * width + CARD_STRIP_GAP
+        x = (W - total) // 2
+        y = CARD_STRIP_TOP + (band - height) // 2
+        return [(x, y, width, height), (x + width + CARD_STRIP_GAP, y, width, height)]
+    step = 62
+    width = W - 2 * step
+    height = min(band - 24, round(width * ASPECT))
+    width = round(height / ASPECT)
+    total_w = width + 2 * step
+    x = (W - total_w) // 2
+    y = CARD_STRIP_TOP + (band - height - 24) // 2
+    return [(x + i * step, y + i * 12, width, height) for i in range(3)]
 
 CARD_RECT = (16, 8, 248, 424)
 CARD_NAME_Y = 448

@@ -69,3 +69,28 @@ class Strip:
 
     def stuck(self):
         self.show_rows([TROUBLE] * self.rows)
+
+    def shimmer(self, step):
+        """A rainbow crawling down the chamfer while the reading is being made.
+
+        The only place on the device that uses colour as colour rather than as a
+        state. Everything else is amber, red or white and means something; this
+        means the deck is thinking, and it is the one moment when there is nothing
+        to read and nothing to do.
+        """
+        self.show_rows([_wheel((step * 4 + i * 85) % 256) for i in range(self.rows)])
+
+
+def _wheel(position):
+    """A place on the colour wheel, 0-255, as an RGBW pixel."""
+    position &= 0xFF
+    if position < 85:
+        r, g, b = 255 - position * 3, position * 3, 0
+    elif position < 170:
+        position -= 85
+        r, g, b = 0, 255 - position * 3, position * 3
+    else:
+        position -= 170
+        r, g, b = position * 3, 0, 255 - position * 3
+    scale = 0.55
+    return (int(r * scale), int(g * scale), int(b * scale), 0)
