@@ -101,7 +101,7 @@ def _pump_forever(session):
 def _status(session, glass):
     return [
         f"{session.state}  —  {session.status}",
-        f"{session.mode}   spread {session.spread}   partials left {glass.partials_left()}",
+        f"{session.mode}/{session.language}   spread {session.spread}   partials left {glass.partials_left()}",
         f"reader: {session.reader.name if session.reader else '(chosen at draw)'}",
     ]
 

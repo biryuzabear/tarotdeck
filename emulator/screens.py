@@ -127,7 +127,7 @@ def confirm(transcript, items):
 card_seed = cardface.seed
 
 
-def card(name, orientation, index, total, plate=None, style=0):
+def card(name, orientation, index, total, plate=None, style=0, label=None, turn_word=None):
     """One card, full width. A reversed plate is turned; its name is not."""
     img = _canvas()
     x0, y0, w, h = layout.CARD_RECT
@@ -139,8 +139,8 @@ def card(name, orientation, index, total, plate=None, style=0):
     img.paste(face, (x0, y0))
     d = _draw(img)
     d.rectangle([x0, y0, x0 + w - 1, y0 + h - 1], outline=INK, width=2)
-    d.text((W // 2, layout.CARD_NAME_Y), name, font=CARD_NAME, fill=INK, anchor="mm")
-    d.text((W // 2, layout.CARD_ORIENT_Y), orientation, font=SMALL, fill=ORNAMENT, anchor="mm")
+    d.text((W // 2, layout.CARD_NAME_Y), label or name, font=CARD_NAME, fill=INK, anchor="mm")
+    d.text((W // 2, layout.CARD_ORIENT_Y), turn_word or orientation, font=SMALL, fill=ORNAMENT, anchor="mm")
     if total > 1:
         d.text((layout.MARGIN, layout.CARD_ORIENT_Y), f"{index}/{total}", font=SMALL, fill=ORNAMENT, anchor="lm")
     return img

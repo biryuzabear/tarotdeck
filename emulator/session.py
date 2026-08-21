@@ -19,6 +19,7 @@ import time
 
 import cardface
 import layout
+import menu
 import readers
 import screens
 import tarot
@@ -40,7 +41,17 @@ SPREADS = [
     ("Two cards", "two forces pulling"),
     ("Three cards", "how it moves"),
 ]
-MODES = ["offline", "online"]
+MODES = ["offline", "online", "cards"]
+MODE_HINT = {
+    "offline": "the model, on the device",
+    "online": "the model, over the network",
+    "cards": "no model — the cards and what they mean",
+}
+
+LANGUAGES = [("en", "english"), ("ru", "\u0440\u0443\u0441\u0441\u043a\u0438\u0439")]
+ONLINE_ONLY = {"ru"}
+"""Russian is online only. The Russian adapter was never exported, so there is
+nothing for the offline program to load."""
 
 CONFIRM_ITEMS = [
     ("Yes", "read it"),
@@ -57,7 +68,7 @@ class Session:
         self.glass = glass
         self.strip = strip
         self.buzzer = buzzer
-        self.reader_for = reader_for or (lambda mode: reader)
+        self.reader_for = reader_for or (lambda mode, deck, language: reader)
         self.reader = reader
         self.deck = deck or tarot.Deck()
         self.transcribe = transcribe or (lambda seconds: "what should i know about the week ahead")
@@ -66,8 +77,10 @@ class Session:
         self.state = None
         self.index = 0
         self.mode = MODES[0]
+        self.language = LANGUAGES[0][0]
         self.style = 0
         self.spread = 1
+        self.settings = menu.Scroller(4)
         self.cards = []
         self.question = ""
         self.status = ""
@@ -97,17 +110,39 @@ class Session:
             self.cancel.set()
         self.cancel = None
 
+    def _settings_rows(self):
+        language = dict(LANGUAGES)[self.language]
+        return [
+            ("Sound", self.buzzer.level),
+            ("Mode", MODE_HINT[self.mode]),
+            ("Language", language),
+            ("Style", cardface.style_names()[self.style].lower()),
+        ]
+
     def _items(self):
+        if self.state == "settings":
+            rows = self._settings_rows()
+            self.settings.resize(len(rows))
+            return self.settings.visible(rows)
         return {
             "spread": SPREADS,
-            "settings": [
-                ("Sound", "on" if not self.buzzer.muted else "off"),
-                ("Mode", self.mode),
-                ("Style", cardface.style_names()[self.style].lower()),
-            ],
             "confirm": CONFIRM_ITEMS,
             "trouble": TROUBLE_ITEMS,
         }.get(self.state, [])
+
+    def _modes(self):
+        return ["online"] if self.language in ONLINE_ONLY else MODES
+
+    def light_selection(self):
+        """Where you are in a list, and how long the list is. Never drawn on glass."""
+        if self.state == "settings":
+            self.strip.position(self.settings.row, of=self.settings.rows)
+            return
+        items = self._items()
+        if items:
+            self.strip.position(self.index % self.strip.rows, of=len(items))
+        else:
+            self.strip.off()
 
     # ------------------------------------------------------------------- states
 
@@ -133,8 +168,20 @@ class Session:
 
     def _enter_settings(self):
         self.status = "settings"
-        self.glass.mono_full(screens.menu("SETTINGS", self._items(), "", 909, ornamented=False))
-        self.strip.position(self.index, of=3)
+        self.settings.resize(len(self._settings_rows()))
+        self._draw_settings(full=True)
+
+    def _draw_settings(self, full=False):
+        rows = self._items()
+        note = ""
+        if self.settings.more_above() or self.settings.more_below():
+            note = f"{self.settings.cursor + 1} of {self.settings.count}"
+        frame = screens.menu("SETTINGS", rows, note, 909, ornamented=False)
+        if full:
+            self.glass.mono_full(frame)
+        else:
+            self.glass.mono_partial(frame)
+        self.light_selection()
 
     def _enter_ask(self):
         self.status = "tap the pad and speak"
@@ -167,7 +214,7 @@ class Session:
     def _enter_draw(self):
         self.status = "the cards turn"
         self.cards = self.deck.draw(self.spread)
-        self.reader = self.reader_for(self.mode)
+        self.reader = self.reader_for(self.mode, self.deck, self.language)
         prompt = tarot.build_prompt(self.question, self.cards, self.deck)
         self.lines = []
         self.stream = typeset.LineStream(layout.READ_COLS)
@@ -187,7 +234,14 @@ class Session:
         self.buzzer.sequence((1320, 1760), 40)
         for i, (name, orientation) in enumerate(self.cards, 1):
             self.strip.position(i - 1, of=len(self.cards))
-            self.glass.full(screens.card(name, orientation, i, len(self.cards), style=self.style))
+            self.glass.full(
+                screens.card(
+                    name, orientation, i, len(self.cards),
+                    style=self.style,
+                    label=self.deck.localize(name),
+                    turn_word=tarot.TURN[self.language][orientation],
+                )
+            )
         self.enter("hold")
 
     def _enter_hold(self):
@@ -216,6 +270,14 @@ class Session:
         getattr(self, f"_on_{kind}", lambda v: None)(value)
 
     def _on_turn(self, delta):
+        if self.state == "settings":
+            shifted = self.settings.move(delta)
+            self.buzzer.click()
+            if shifted:
+                self._draw_settings()
+            else:
+                self.light_selection()
+            return
         items = self._items()
         if items:
             self.index = (self.index + delta) % len(items)
@@ -232,13 +294,8 @@ class Session:
             self.spread = self.index + 1
             self.enter("ask")
         elif self.state == "settings":
-            if self.index == 0:
-                self.buzzer.muted = not self.buzzer.muted
-            elif self.index == 1:
-                self.mode = MODES[(MODES.index(self.mode) + 1) % len(MODES)]
-            else:
-                self.style = (self.style + 1) % len(cardface.STYLES)
-            self.glass.mono_partial(screens.menu("SETTINGS", self._items(), "", 909, ornamented=False))
+            self._settings_confirm()
+            self._draw_settings()
         elif self.state == "confirm":
             if self.index == 0:
                 self.enter("draw")
@@ -261,6 +318,23 @@ class Session:
                 self.enter("draw")
             else:
                 self.enter("ask")
+
+    def _settings_confirm(self):
+        row = self.settings.cursor
+        if row == 0:
+            self.buzzer.cycle()
+        elif row == 1:
+            choices = self._modes()
+            here = choices.index(self.mode) if self.mode in choices else -1
+            self.mode = choices[(here + 1) % len(choices)]
+        elif row == 2:
+            codes = [code for code, _ in LANGUAGES]
+            self.language = codes[(codes.index(self.language) + 1) % len(codes)]
+            self.deck = tarot.Deck(language=self.language)
+            if self.mode not in self._modes():
+                self.mode = self._modes()[0]
+        else:
+            self.style = (self.style + 1) % len(cardface.STYLES)
 
     def _on_tick_left(self, _=None):
         self.buzzer.sequence((2640, 1760), 22)

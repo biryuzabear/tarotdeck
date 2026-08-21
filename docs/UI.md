@@ -210,11 +210,36 @@ row is one menu line, and the rows are big enough to read at arm's length.
 Three items also means Settings has no slot in the list. It is reached by ticking
 the left gear back from the top menu, where there is otherwise nowhere to go.
 
-Settings holds exactly three: **Sound**, **Mode** and **Style**. It used to hold a
-*Back* row, which was waste — the left gear is back everywhere on the device, so a
-row spent saying so bought nothing and cost the third slot. Style chooses how a card
-is drawn; there is one for now and the list is a registry, so a second is one entry
-and no other change.
+Settings has outgrown three, so a list now **scrolls through a window of three**.
+The distinction that matters is which moves cost the panel anything: moving inside
+the window moves the light and nothing else, and only stepping past the edge scrolls
+the window and costs one fast refresh. A four-item list therefore repaints on one
+step in four, and a three-item list — every other menu on the device — still repaints
+never. The core trick survives the growth.
+
+Settings holds Sound, Mode, Language and Style, and will hold more. It used to hold
+a *Back* row, which was waste: the left gear is back everywhere, so a row saying so
+bought nothing.
+
+**Sound** is on, quiet or off — quiet drops the amplitude rather than the tones, so
+the deck still ticks under the thumb without announcing itself to a room.
+
+**Mode** is a third program now: offline runs the model on the device, online hands
+it to an API, and **cards** uses no model at all. Cards reads out the drawn cards and
+the keyword tables the prompt is built from, and stops — no weights, no network,
+instant, and honest about being a lookup rather than a reading. It is also the only
+program that cannot fail.
+
+**Language** is English or Russian. Russian is online only, because the Russian
+adapter was never exported and there is nothing for the offline program to load.
+Choosing it moves the mode to online and leaves no other choice there.
+
+Everything the querent sees turns with the language, and so does the prompt: the
+Russian training rows read `Карты: 1. Восьмёрка Кубков (перевёрнуто) [...]`, so an
+English scaffold around Russian keywords would be a shape the adapter never saw.
+
+**Style** chooses how a card is drawn. One for now, and the list is a registry, so a
+second is one entry and no other change.
 
 The buzzer clicks on every scroll step, in step with the light.
 

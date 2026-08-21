@@ -266,3 +266,44 @@ def validate(text, cards):
     reading the querent has already read is not taken away from them."""
     lowered = text.lower()
     return [name for name, _ in cards if name.lower() not in lowered]
+
+
+class MeaningsReader(Reader):
+    """No model at all. The cards, what they mean, and the rest is yours.
+
+    A third program alongside local and networked, and the only one that needs
+    neither a network nor a gigabyte of weights: it reads the same keyword tables
+    the prompt is built from and lays them out. Instant, offline, and honest about
+    being a lookup rather than a reading — which is why it says so at the end.
+    """
+
+    name = "meanings"
+
+    def __init__(self, deck, language="en"):
+        self.deck = deck
+        self.language = language
+
+    CLOSE = {
+        "en": "The cards have said their part. The rest is yours to read.",
+        "ru": "Карты сказали своё. Дальше читайте сами.",
+    }
+    def stream(self, prompt, cancel=None):
+        cards = _cards_from_prompt(prompt)
+        if not cards:
+            raise ReaderError("no cards to describe")
+        for name, turned, keywords in cards:
+            if cancel is not None and cancel.is_set():
+                return
+            yield f"{name}, {turned}. "
+            yield keywords.rstrip(".") + ". "
+        yield self.CLOSE.get(self.language, self.CLOSE["en"])
+
+
+def _cards_from_prompt(prompt):
+    """Read back what build_prompt wrote, so this reader needs nothing else."""
+    import re
+
+    out = []
+    for match in re.finditer(r"\d+\.\s(.+?)\s\((\w+)\)\s\[([^\]]*)\]", prompt):
+        out.append((match.group(1), match.group(2), match.group(3)))
+    return out

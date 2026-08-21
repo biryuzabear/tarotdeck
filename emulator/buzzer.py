@@ -26,28 +26,44 @@ class Buzzer:
             _DEVICE = TonalBuzzer(pins.BUZZER, octaves=3)
         self.device = _DEVICE
         self.cache = {}
-        self.muted = False
+        self.level = "on"
         try:
             pygame.mixer.init(frequency=RATE, size=-16, channels=1, buffer=256)
             self.audible = True
         except pygame.error:
             self.audible = False
 
+    LEVELS = ["on", "quiet", "off"]
+    AMPLITUDE = {"on": 9000, "quiet": 2600, "off": 0}
+
+    @property
+    def muted(self):
+        return self.level == "off"
+
+    @muted.setter
+    def muted(self, value):
+        self.level = "off" if value else "on"
+
+    def cycle(self):
+        self.level = self.LEVELS[(self.LEVELS.index(self.level) + 1) % len(self.LEVELS)]
+        return self.level
+
     def _tone(self, hz, ms):
-        key = (hz, ms)
+        key = (hz, ms, self.level)
         if key not in self.cache:
+            peak = self.AMPLITUDE[self.level]
             n = int(RATE * ms / 1000)
             period = RATE / hz
             samples = bytearray()
             for i in range(n):
                 fade = min(1.0, min(i, n - i) / (RATE * 0.004))
-                value = 9000 if (i % period) < period / 2 else -9000
+                value = peak if (i % period) < period / 2 else -peak
                 samples += struct.pack("<h", int(value * fade))
             self.cache[key] = pygame.mixer.Sound(buffer=bytes(samples))
         return self.cache[key]
 
     def play(self, hz, ms=26):
-        if self.muted:
+        if self.level == "off":
             return
         self.device.play(hz)
         if self.audible:

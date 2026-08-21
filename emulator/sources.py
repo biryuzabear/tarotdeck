@@ -16,7 +16,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from readers import HttpReader, ScriptedReader
+from readers import HttpReader, MeaningsReader, ScriptedReader
 
 SYSTEM_PROMPT = Path(__file__).resolve().parent.parent / "tarot_model" / "reading_system_prompt.txt"
 
@@ -94,6 +94,9 @@ def cloud():
     )
 
 
-def for_mode(mode):
+def for_mode(mode, deck=None, language="en"):
+    """Three programs now. The third needs neither weights nor a network."""
+    if mode == "cards" and deck is not None:
+        return MeaningsReader(deck, language)
     reader = cloud() if mode == "online" else local()
     return reader or ScriptedReader(tokens_per_second=SCRIPTED_RATE)
