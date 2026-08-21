@@ -301,7 +301,7 @@ class Session:
             self.index = (self.index + delta) % len(items)
             self.strip.position(self.index, of=len(items))
             self.buzzer.click()
-        elif self.state == "read" and len(self.pages) > 1:
+        elif self.state in ("read", "done") and len(self.pages) > 1:
             self.page = (self.page + delta) % len(self.pages)
             self.buzzer.click()
             self._show_page()
@@ -400,6 +400,11 @@ class Session:
         self._flush_lines(final=True)
         self.state = "done"
         self.status = f"read it - {len(self.pages)} pages, either tick closes"
+        # The total was unknown while the words were arriving, so the footer left a
+        # gap where it goes. Writing it now adds ink to blank paper and nothing
+        # else, which is exactly what a partial refresh is for: one 0.32 s append,
+        # no erase, nothing on the page moves.
+        self.glass.mono_partial(self._page_image())
         self._mark_pages()
 
     def _on_failed(self, message):

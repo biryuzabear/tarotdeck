@@ -58,6 +58,7 @@ TABLE = {
         "another spread": "другой расклад",
         # reading
         "{page} / {pages}": "{page} / {pages}",
+        "{page} /": "{page} /",
         "tick either way to close": "любой тик — закрыть",
         # trouble and rest
         "trouble": "сбой",

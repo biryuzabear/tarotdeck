@@ -219,17 +219,19 @@ def reading(lines, page, pages, cards=(), deck=None, style=0, front=0, language=
     t = strings.translator(language)
     count = len(cards)
 
-    # The count is on the glass from the first line onwards. While the reading is
-    # still arriving the total can only be what has landed so far, so it is marked
-    # as provisional rather than stated as final: three dots, and the number climbs
-    # as the words come in.
-    footer = t("{page} / {pages}", page=page, pages=pages)
-    if growing:
-        footer += "..."
-    footer += "   " + t("tick either way to close")
+    # The counter is on the glass from the first line, but its second half is not
+    # written until it is true. While the reading is still arriving the footer says
+    # "1 /" and leaves the total blank; when the reading ends the number is added.
+    #
+    # That is a deliberate use of what the panel is good at. A partial refresh adds
+    # ink to blank paper cleanly and erases badly, so a count that grew in place —
+    # "1 / 2" becoming "1 / 3" — would mean rubbing out a digit on every page turn.
+    # An empty space that is filled in once is a pure append: 0.32 s, nothing moves.
+    counter = t("{page} /", page=page) if growing else t("{page} / {pages}", page=page, pages=pages)
+    hint = t("tick either way to close")
 
     if not cards:
-        return typeset.page_image(lines, (W, H), footer=footer or None)
+        return typeset.page_image(lines, (W, H), footer=f"{counter}   {hint}")
 
     img = typeset.page_image(
         lines, (W, H),
@@ -253,8 +255,9 @@ def reading(lines, page, pages, cards=(), deck=None, style=0, front=0, language=
     rule = layout.rule_y(count)
     d.line([(layout.MARGIN, rule), (W - layout.MARGIN, rule)], fill=INK, width=1)
 
-    if footer:
-        d.text((layout.MARGIN, H - layout.MARGIN - 11), footer, font=SMALL, fill=INK)
+    baseline = H - layout.MARGIN - 11
+    d.text((layout.MARGIN, baseline), counter, font=SMALL, fill=INK)
+    d.text((layout.MARGIN + layout.COUNTER_W, baseline), hint, font=SMALL, fill=INK)
     return img
 
 

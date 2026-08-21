@@ -45,6 +45,15 @@ RULE_GAP = 4
 TEXT_GAP = 16
 FOOTER_H = 20
 
+COUNTER_W = 56
+"""Space reserved for `page / pages` in the footer.
+
+Wide enough for the longest counter the design can produce, so the hint beside it
+never moves when the total is written in. A hint that shuffled sideways at the
+moment the reading finished would be a repaint, and repaints are what this screen
+spends its whole design avoiding.
+"""
+
 
 def card_row(count):
     """The drawn cards, side by side between the margins, as large as the band allows.
