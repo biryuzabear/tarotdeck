@@ -45,13 +45,19 @@ MODES = ["offline", "online", "cards"]
 MODE_HINT = {
     "offline": "the model, on the device",
     "online": "the model, over the network",
-    "cards": "no model — the cards and what they mean",
+    "cards": "no model, just the meanings",
 }
 
 LANGUAGES = [("en", "english"), ("ru", "\u0440\u0443\u0441\u0441\u043a\u0438\u0439")]
-ONLINE_ONLY = {"ru"}
-"""Russian is online only. The Russian adapter was never exported, so there is
-nothing for the offline program to load."""
+NO_LOCAL_MODEL = {"ru"}
+"""Languages with no model to load on the device.
+
+The Russian adapter was never exported, so the offline program has nothing to run.
+What that rules out is the *offline model*, not offline working: `cards` needs no
+model at all and the Russian keyword tables are right here, so it stays available.
+The constraint is about weights, and it is written as weights rather than as a blunt
+"Russian is online only", which would have taken the one program that cannot fail
+away from the language that has no model to fall back on."""
 
 CONFIRM_ITEMS = [
     ("Yes", "read it"),
@@ -80,7 +86,7 @@ class Session:
         self.language = LANGUAGES[0][0]
         self.style = 0
         self.spread = 1
-        self.settings = menu.Scroller(4)
+        self.settings = menu.Pager(4)
         self.cards = []
         self.question = ""
         self.status = ""
@@ -131,7 +137,9 @@ class Session:
         }.get(self.state, [])
 
     def _modes(self):
-        return ["online"] if self.language in ONLINE_ONLY else MODES
+        if self.language in NO_LOCAL_MODEL:
+            return [m for m in MODES if m != "offline"]
+        return MODES
 
     def light_selection(self):
         """Where you are in a list, and how long the list is. Never drawn on glass."""
@@ -173,10 +181,10 @@ class Session:
 
     def _draw_settings(self, full=False):
         rows = self._items()
-        note = ""
-        if self.settings.more_above() or self.settings.more_below():
-            note = f"{self.settings.cursor + 1} of {self.settings.count}"
-        frame = screens.menu("SETTINGS", rows, note, 909, ornamented=False)
+        frame = screens.menu(
+            "SETTINGS", rows, "", 909, ornamented=False,
+            page=self.settings.page, pages=self.settings.pages,
+        )
         if full:
             self.glass.mono_full(frame)
         else:

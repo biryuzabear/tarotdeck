@@ -36,6 +36,12 @@ def _ornament(seed):
     return _ORNAMENTS[seed]
 
 
+def _fit(text, cols):
+    """Nothing is allowed to run off the glass. Better a clipped word than a line
+    that looks like the screen is broken."""
+    return text if len(text) <= cols else text[: cols - 1].rstrip() + "\u2026"
+
+
 def _canvas(fill=PAPER):
     return Image.new("L", (W, H), fill)
 
@@ -46,13 +52,31 @@ def _draw(img):
     return d
 
 
-def menu(title, items, note="", seed=4242, ornamented=True):
+def _page_marks(d, page, pages, y):
+    """One mark per page, the current one filled. Small, crisp, and countable at a
+    glance — which "2 of 4" was not, because the number of items is not a place."""
+    if pages <= 1:
+        return
+    size, gap = 7, 6
+    total = pages * size + (pages - 1) * gap
+    x = W - 18 - total
+    for i in range(pages):
+        box = [x, y - size // 2, x + size, y + size // 2]
+        if i == page:
+            d.rectangle(box, fill=INK)
+        else:
+            d.rectangle(box, outline=INK, width=1)
+        x += size + gap
+
+
+def menu(title, items, note="", seed=4242, ornamented=True, page=0, pages=1):
     """Top informs, bottom chooses. The selection is the lit lens, not ink."""
     img = _canvas()
     if ornamented:
         img.paste(_ornament(seed), (0, layout.ORNAMENT_TOP))
     d = _draw(img)
     d.text((18, layout.TITLE_Y), title, font=SMALL, fill=ORNAMENT if ornamented else INK)
+    _page_marks(d, page, pages, layout.MENU_TOP - 30)
     if note:
         d.text((18, layout.MENU_TOP - 44), note, font=BODY, fill=INK)
     d.line([(0, layout.MENU_TOP - 12), (W, layout.MENU_TOP - 12)], fill=ORNAMENT, width=2)
@@ -62,7 +86,7 @@ def menu(title, items, note="", seed=4242, ornamented=True):
             d.line([(18, y - layout.ROW_H / 2), (W - 18, y - layout.ROW_H / 2)], fill=FAINT, width=1)
         d.text((26, y - 16), label, font=ROW, fill=INK)
         if hint and hint != "-":
-            d.text((26, y + 12), hint, font=HINT, fill=ORNAMENT)
+            d.text((26, y + 12), _fit(hint, 29), font=HINT, fill=ORNAMENT)
     return img
 
 

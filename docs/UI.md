@@ -210,12 +210,19 @@ row is one menu line, and the rows are big enough to read at arm's length.
 Three items also means Settings has no slot in the list. It is reached by ticking
 the left gear back from the top menu, where there is otherwise nowhere to go.
 
-Settings has outgrown three, so a list now **scrolls through a window of three**.
-The distinction that matters is which moves cost the panel anything: moving inside
-the window moves the light and nothing else, and only stepping past the edge scrolls
-the window and costs one fast refresh. A four-item list therefore repaints on one
-step in four, and a three-item list — every other menu on the device — still repaints
-never. The core trick survives the growth.
+Settings has outgrown three, so a longer list is turned in **pages of three** —
+paged, not scrolled by one. That is what makes the indicator honest: a window
+sliding a row at a time can only say "item 2 of 4", which is not a place you can go
+back to, while a page says "1 of 2", which is. It also matches the lenses, since
+three lit rows are exactly one page.
+
+The page is marked by one small square per page with the current one filled, sitting
+above the divider. Countable at a glance, and no number to read.
+
+The move that costs nothing is still the common one: turning within a page moves the
+light and repaints nothing, and only crossing to the next page costs a fast refresh.
+On four items that is one repaint in three moves; on three items — every other menu
+on the device — it is none, ever. The core trick survives the growth.
 
 Settings holds Sound, Mode, Language and Style, and will hold more. It used to hold
 a *Back* row, which was waste: the left gear is back everywhere, so a row saying so
@@ -230,9 +237,11 @@ the keyword tables the prompt is built from, and stops — no weights, no networ
 instant, and honest about being a lookup rather than a reading. It is also the only
 program that cannot fail.
 
-**Language** is English or Russian. Russian is online only, because the Russian
-adapter was never exported and there is nothing for the offline program to load.
-Choosing it moves the mode to online and leaves no other choice there.
+**Language** is English or Russian. The Russian adapter was never exported, so
+Russian has no model to run on the device — but that rules out the offline *model*,
+not offline working. `cards` needs no model and the Russian keyword tables are in
+the repo, so Russian keeps it. Choosing Russian moves the mode off offline and
+leaves online and cards.
 
 Everything the querent sees turns with the language, and so does the prompt: the
 Russian training rows read `Карты: 1. Восьмёрка Кубков (перевёрнуто) [...]`, so an
