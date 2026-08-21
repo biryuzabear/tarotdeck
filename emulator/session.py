@@ -183,7 +183,7 @@ class Session:
     def _draw_settings(self, full=False):
         rows = self._items()
         frame = screens.menu(
-            "SETTINGS", rows, "", 909, ornamented=False,
+            "SETTINGS", rows, "", 909, ornamented=False, mono=True,
             page=self.settings.page, pages=self.settings.pages,
         )
         if full:
@@ -236,7 +236,7 @@ class Session:
         self.reader = self.reader_for(self.mode, self.deck, self.language)
         prompt = tarot.build_prompt(self.question, self.cards, self.deck)
         self.lines = []
-        self.stream = typeset.LineStream(layout.READ_COLS)
+        self.stream = typeset.LineStream(layout.READ_COLS - 2)
         self.pending = []
 
         def job(cancel):
@@ -270,7 +270,7 @@ class Session:
     def _enter_read(self):
         self.status = "the reading"
         self.page = 0
-        self.glass.mono_full(screens.reading([], 1, 1))
+        self.glass.mono_full(self._page_image())
 
     def _enter_trouble(self, message="something went wrong"):
         self.status = "trouble"
@@ -409,7 +409,7 @@ class Session:
         while len(self.pending) >= step or (final and self.pending):
             take, self.pending = self.pending[:step], self.pending[step:]
             self.lines.extend(take)
-            self.pages = typeset.paginate(self.lines)
+            self.pages = typeset.paginate(self.lines, layout.READ_ROWS_WITH_CARDS)
             if len(self.pages) - 1 > self.page:
                 self.page = len(self.pages) - 1
                 self.glass.mono_full(self._page_image())
@@ -419,7 +419,10 @@ class Session:
 
     def _page_image(self):
         page = self.pages[self.page] if self.page < len(self.pages) else []
-        return screens.reading(page, self.page + 1, len(self.pages))
+        return screens.reading(
+            page, self.page + 1, len(self.pages),
+            cards=self.cards, deck=self.deck, style=self.style,
+        )
 
     def _show_page(self):
         self.glass.mono_full(self._page_image())

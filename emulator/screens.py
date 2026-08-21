@@ -5,9 +5,14 @@ state. `glass.py` decides how a frame reaches the panel; this file decides only 
 is on it. Keeping the two apart is what lets the same frame be sent as a four-grey
 plate or as a mono partial without the drawing code knowing or caring.
 
-Four greys exist here: paper, faint, ornament, ink. Only ink and paper survive a
-mono refresh, so anything that must be legible during a streamed reading is drawn
-in ink alone.
+Four greys exist here: paper, faint, ornament, ink. **Only ink and paper survive a
+mono refresh** — `glass` thresholds at 0x60, so 0x80 and 0xC0 both come out white —
+so every screen that will be sent in mono says so and draws itself in ink alone.
+
+That is not a style rule, it is the difference between a working control and a dead
+one: the settings values were drawn in 0x80, which meant pressing the button
+changed the value and erased it in the same stroke, and the screen was identical
+before and after.
 """
 
 from PIL import Image, ImageDraw
@@ -26,6 +31,11 @@ HINT = typeset.font("Regular", 12)
 BODY = typeset.font("Text", 15)
 SMALL = typeset.font("Regular", 12)
 CARD_NAME = typeset.font("SemiBold", 20)
+
+def _tone(mono, level):
+    """A grey, or ink if this frame is going out in mono."""
+    return INK if mono else level
+
 
 _ORNAMENTS = {}
 
@@ -69,24 +79,24 @@ def _page_marks(d, page, pages, y):
         x += size + gap
 
 
-def menu(title, items, note="", seed=4242, ornamented=True, page=0, pages=1):
+def menu(title, items, note="", seed=4242, ornamented=True, page=0, pages=1, mono=False):
     """Top informs, bottom chooses. The selection is the lit lens, not ink."""
     img = _canvas()
     if ornamented:
         img.paste(_ornament(seed), (0, layout.ORNAMENT_TOP))
     d = _draw(img)
-    d.text((18, layout.TITLE_Y), title, font=SMALL, fill=ORNAMENT if ornamented else INK)
+    d.text((18, layout.TITLE_Y), title, font=SMALL, fill=_tone(mono, ORNAMENT))
     _page_marks(d, page, pages, layout.MENU_TOP - 30)
     if note:
         d.text((18, layout.MENU_TOP - 44), note, font=BODY, fill=INK)
-    d.line([(0, layout.MENU_TOP - 12), (W, layout.MENU_TOP - 12)], fill=ORNAMENT, width=2)
+    d.line([(0, layout.MENU_TOP - 12), (W, layout.MENU_TOP - 12)], fill=_tone(mono, ORNAMENT), width=2)
     for i, (label, hint) in enumerate(items[: layout.ROWS]):
         y = layout.row_centre(i)
         if i:
-            d.line([(18, y - layout.ROW_H / 2), (W - 18, y - layout.ROW_H / 2)], fill=FAINT, width=1)
+            d.line([(18, y - layout.ROW_H / 2), (W - 18, y - layout.ROW_H / 2)], fill=_tone(mono, FAINT), width=1)
         d.text((26, y - 16), label, font=ROW, fill=INK)
         if hint and hint != "-":
-            d.text((26, y + 12), _fit(hint, 29), font=HINT, fill=ORNAMENT)
+            d.text((26, y + 12), _fit(hint, 29), font=HINT, fill=_tone(mono, ORNAMENT))
     return img
 
 
@@ -170,11 +180,47 @@ def card(name, orientation, index, total, plate=None, style=0, label=None, turn_
     return img
 
 
-def reading(lines, page, pages):
-    footer = f"{page} of {pages}" if pages > 1 else ""
+def reading(lines, page, pages, cards=(), deck=None, style=0):
+    """The cards stay. They shrink to a strip across the top and remain there while
+    the words arrive, because a reading you cannot see the cards for is a reading
+    about nothing. The text lives in a frame below them.
+
+    Everything here is ink on paper: this screen is sent in mono, where any grey
+    would come out white.
+    """
+    footer = ""
     if pages > 1:
+        footer = f"{page} of {pages}"
         footer += "   turn the gear" if page < pages else "   tick to seal"
-    return typeset.page_image(lines, (W, H), footer=footer or None)
+
+    top = layout.FRAME_TOP + layout.FRAME_PAD if cards else layout.READ_TOP
+    rows = layout.READ_ROWS_WITH_CARDS if cards else layout.READ_ROWS
+    img = typeset.page_image(
+        lines, (W, H), footer=footer or None,
+        top=top, left=layout.MARGIN + layout.FRAME_PAD if cards else typeset.MARGIN_X,
+        rows=rows,
+    )
+    if not cards:
+        return img
+
+    d = _draw(img)
+    for (x, y, cw, ch), (name, orientation) in zip(layout.card_strip(len(cards)), cards):
+        plate = cardface.face(
+            name, cw, ch, turned=orientation == "reversed", style=style, wires=False
+        )
+        img.paste(plate, (x, y))
+        d.rectangle([x, y, x + cw - 1, y + ch - 1], outline=INK, width=2)
+    if len(cards) == 1 and deck is not None:
+        x, y, cw, ch = layout.card_strip(1)[0]
+        name, orientation = cards[0]
+        d.text((x + cw + 14, y + ch // 2 - 10), deck.localize(name), font=BODY, fill=INK)
+        d.text((x + cw + 14, y + ch // 2 + 12), orientation, font=SMALL, fill=INK)
+
+    d.rectangle(
+        [layout.MARGIN, layout.FRAME_TOP, W - layout.MARGIN, layout.FOOTER_Y - 8],
+        outline=INK, width=1,
+    )
+    return img
 
 
 def trouble(message, items):

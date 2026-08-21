@@ -233,7 +233,7 @@ def _court(d, element, rank, cx, cy, r, turned=False):
         d.line([round(x - half), round(y), round(x + half), round(y)], fill=INK, width=3)
 
 
-def gravure_face(name, w, h, turned=False):
+def gravure_face(name, w, h, turned=False, wires=True):
     img = Image.new("L", (w, h), PAPER)
     d = ImageDraw.Draw(img)
     d.fontmode = "1"
@@ -250,7 +250,8 @@ def gravure_face(name, w, h, turned=False):
     else:
         _court(d, element, value, cx, cy, r, turned)
 
-    _wires(d, w, h, cx, cy, r, rand, majors=kind == "major")
+    if wires:
+        _wires(d, w, h, cx, cy, r, rand, majors=kind == "major")
     return img
 
 
@@ -331,6 +332,12 @@ def style_names():
     return [name for name, _ in STYLES]
 
 
-def face(name, w, h, turned=False, style=0):
+def face(name, w, h, turned=False, style=0, wires=True):
+    """`wires=False` drops the board layer.
+
+    The wires are drawn in a grey a mono refresh erases, and the reading is a mono
+    screen — so the strip of cards that stays above the text is drawn without them
+    rather than with an invisible half. At strip size they would be clutter anyway.
+    """
     _, draw = STYLES[style % len(STYLES)]
-    return draw(name, w, h, turned)
+    return draw(name, w, h, turned, wires)

@@ -46,6 +46,14 @@ class Ears:
         """0..1, for the lenses. Zero when there is nothing to show."""
         return 0.0
 
+    def elapsed(self):
+        return 0.0
+
+    def silent_for(self):
+        """Seconds of quiet. Zero from anything that cannot hear, so the take is
+        ended by the pad or the cap rather than by silence that was never measured."""
+        return 0.0
+
 
 class TypedEars(Ears):
     """No microphone. A fixed question, after a wait the length of a real one."""

@@ -30,7 +30,7 @@ ROWS = 22
 LEADING = 20
 MARGIN_X = 16
 MARGIN_Y = 14
-MAX_PAGES = 3
+MAX_PAGES = 4
 
 INK, PAPER = 0, 255
 
@@ -73,19 +73,19 @@ def paginate(lines, rows=ROWS, max_pages=MAX_PAGES):
     return pages[:max_pages] if pages else [[]]
 
 
-def page_image(lines, size=(280, 480), footer=None):
+def page_image(lines, size=(280, 480), footer=None, top=MARGIN_Y, left=MARGIN_X, rows=ROWS):
     """Draw `lines` at their fixed positions. Drawing fewer lines is the same image
     with the tail missing, which is what makes a partial refresh append-only."""
     img = Image.new("L", size, PAPER)
     d = ImageDraw.Draw(img)
     d.fontmode = "1"
-    y = MARGIN_Y
-    for line in lines[:ROWS]:
-        d.text((MARGIN_X, y), line, font=BODY, fill=INK)
+    y = top
+    for line in lines[:rows]:
+        d.text((left, y), line, font=BODY, fill=INK)
         y += LEADING
     if footer:
         small = font("Regular", 12)
-        d.line([(MARGIN_X, size[1] - 26), (size[0] - MARGIN_X, size[1] - 26)], fill=0x80, width=1)
+        d.line([(MARGIN_X, size[1] - 26), (size[0] - MARGIN_X, size[1] - 26)], fill=INK, width=1)
         d.text((MARGIN_X, size[1] - 20), footer, font=small, fill=INK)
     return img
 
@@ -99,11 +99,13 @@ class LineStream:
     never change again.
     """
 
-    def __init__(self, cols=COLS):
+    def __init__(self, cols=COLS, sentences_per_paragraph=2):
         self.cols = cols
         self.buffer = ""
         self.current = ""
         self.lines = []
+        self.sentences_per_paragraph = sentences_per_paragraph
+        self.sentences = 0
 
     def feed(self, chunk):
         """Returns the lines completed by this chunk, in order."""
@@ -120,10 +122,33 @@ class LineStream:
                 elif len(self.current) + 1 + len(word) <= self.cols:
                     self.current += " " + word
                 else:
-                    finished.append(self.current)
-                    self.lines.append(self.current)
+                    finished.extend(self._close(self.current))
                     self.current = word
+                if word.endswith((".", "!", "?")):
+                    self.sentences += 1
+                    if self.sentences >= self.sentences_per_paragraph:
+                        self.sentences = 0
+                        finished.extend(self._close(self.current, paragraph=True))
+                        self.current = ""
         return finished
+
+    def _close(self, line, paragraph=False):
+        """Emit a finished line, and a blank one when a paragraph has had its say.
+
+        The break is decided the moment the sentence that ends the paragraph is
+        complete, which keeps the page append-only: nothing already drawn moves, a
+        blank row is simply left where the break falls. Deciding it at the end of a
+        *wrapped* line instead would almost never fire, because sentences end in
+        the middle of lines.
+        """
+        if not line:
+            return []
+        out = [line]
+        self.lines.append(line)
+        if paragraph:
+            out.append("")
+            self.lines.append("")
+        return out
 
     def flush(self):
         """The tail, once the stream has ended."""
@@ -135,8 +160,7 @@ class LineStream:
                 tail = tail + " " + self.buffer
             else:
                 if tail:
-                    finished.append(tail)
-                    self.lines.append(tail)
+                    finished.extend(self._close(tail))
                 tail = self.buffer
         if tail:
             finished.append(tail)

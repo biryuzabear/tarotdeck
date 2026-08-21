@@ -20,11 +20,37 @@ MARGIN = 16
 TITLE_Y = 12
 
 READ_COLS = 31
-READ_ROWS = 22
 READ_LEADING = 20
 READ_TOP = 14
+READ_ROWS = 22
 FOOTER_H = 26
 FOOTER_Y = H - FOOTER_H
+
+CARD_STRIP_TOP = 8
+CARD_STRIP_H = 140
+CARD_STRIP_GAP = 6
+
+FRAME_TOP = CARD_STRIP_TOP + CARD_STRIP_H + 10
+FRAME_PAD = 10
+READ_ROWS_WITH_CARDS = (FOOTER_Y - 8 - FRAME_TOP - 2 * FRAME_PAD) // READ_LEADING
+
+
+def card_strip(count):
+    """Where each drawn card sits while the reading is being read.
+
+    The cards do not go away when the words arrive. They shrink to a strip across
+    the top and stay there, because a reading you cannot see the cards for is a
+    reading about nothing.
+    """
+    count = max(1, min(3, count))
+    gap = CARD_STRIP_GAP
+    width = (W - 2 * MARGIN - (count - 1) * gap) // count
+    height = min(CARD_STRIP_H, round(width * 1.714))
+    width = round(height / 1.714)
+    total = count * width + (count - 1) * gap
+    x = (W - total) // 2
+    y = CARD_STRIP_TOP + (CARD_STRIP_H - height) // 2
+    return [(x + i * (width + gap), y, width, height) for i in range(count)]
 
 CARD_RECT = (16, 8, 248, 424)
 CARD_NAME_Y = 448

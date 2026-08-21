@@ -118,4 +118,12 @@ def for_mode(mode, deck=None, language="en"):
     if mode == "cards" and deck is not None:
         return MeaningsReader(deck, language)
     reader = cloud() if mode == "online" else local()
-    return reader or ScriptedReader(tokens_per_second=SCRIPTED_RATE)
+    if reader:
+        return reader
+    if deck is not None:
+        # The scripted reader replays a real training answer, which is right for
+        # timing and wrong for everything else: it is about three other cards, so a
+        # fallback into it puts an interpretation on screen that does not match the
+        # spread. The meanings reader is always about the cards actually drawn.
+        return MeaningsReader(deck, language)
+    return ScriptedReader(tokens_per_second=SCRIPTED_RATE)
