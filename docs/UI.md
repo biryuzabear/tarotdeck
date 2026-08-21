@@ -218,9 +218,19 @@ What the reference actually does, and what the port reproduces:
 - **One hero sigil, open rather than woven.** Outer circle, a second circle well
   inside it, an inscribed diamond with its two diagonals, and at the centre a
   star-cog ringed by bolt holes. Few elements, far apart.
-- **Traces hug the frame.** Orthogonal runs in bundles of two or three, cornered
-  at 45 degrees, ending in a small ring via. They travel down the margins and
-  across the corners; they never radiate out of the sigil.
+- **The cog sits on top and nothing crosses it.** A disc of paper is punched out
+  before it is drawn, so the diamond and its diagonals stop at its edge instead
+  of running through it. That clearance is most of why the centre reads clean.
+- **Circles talk to each other around the hero.** A satellite runs a radial stub
+  out to a bus radius, the bus carries it round the hero as an arc, and another
+  stub drops into the next satellite, with a via at each end. Because the
+  informing half is wide and short, there is no room for an orbit above and below
+  the hero: the satellites sit out to the sides and the bus goes over the top or
+  under the bottom, chosen by the seed.
+- **Traces hug the frame, and stay short.** Orthogonal runs in bundles of two or
+  three, cornered at 45 degrees, ending in a small ring via. They travel down the
+  margins and across the corners; they never radiate out of the sigil. Kept
+  deliberately stubby — the screen is 47 mm wide and a long run just clutters it.
 - **Depth by layer.** Background sigils and the long runs sit one grey lighter
   than the hero — which is how the reference uses opacity, and it maps exactly
   onto the panel's four levels: paper, faint, ornament, text.

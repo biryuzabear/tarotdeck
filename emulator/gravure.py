@@ -96,6 +96,7 @@ def sigil(radius, seed, hub=True):
 
     core = radius * (0.40 + r() * 0.08)
     if ring - core >= MIN_GAP * 1.5 and core >= MIN_EDGE:
+        out.append(("punch", (0, 0), core + MIN_GAP * 0.6))
         points = 5 + int(r() * 7)
         while points > 4 and 2 * math.pi * core / (points * 2) < MIN_EDGE * 0.55:
             points -= 1
@@ -141,6 +142,31 @@ def _run(x0, y0, x1, y1, jog):
     return pts
 
 
+def _link(prims, cx, cy, first, second, bus_r, via_r, lanes, spacing):
+    """Out of one satellite, around the hero on a bus arc, into the next.
+
+    The arc always runs clockwise in screen coordinates from `first` to
+    `second`, so the caller picks which way round the hero it travels by
+    choosing the order.
+    """
+    a1, d1 = first
+    a2, d2 = second
+    sweep = (a2 - a1) % (2 * math.pi)
+    for lane in range(lanes):
+        off = (lane - (lanes - 1) / 2) * spacing
+        rad = bus_r + off
+        p1 = (cx + math.cos(a1) * d1, cy + math.sin(a1) * d1)
+        q1 = (cx + math.cos(a1) * rad, cy + math.sin(a1) * rad)
+        p2 = (cx + math.cos(a2) * d2, cy + math.sin(a2) * d2)
+        q2 = (cx + math.cos(a2) * rad, cy + math.sin(a2) * rad)
+        prims.append(("line", p1, q1))
+        prims.append(("line", q2, p2))
+        prims.append(("arc", (cx, cy), rad, a1, a1 + sweep))
+        if lane == 0:
+            prims.append(("circle", p1, via_r))
+            prims.append(("circle", p2, via_r))
+
+
 def ornament(w, h, seed):
     """Returns an L image: FAINT background layer, ORNAMENT foreground."""
     img = Image.new("L", (w, h), PAPER)
@@ -148,7 +174,7 @@ def ornament(w, h, seed):
     r = rng(seed)
 
     cx, cy = w * 0.5, h * 0.46
-    core = min(w * 0.26, h * 0.38)
+    core = min(w * 0.22, h * 0.36)
     via = max(MIN_DOT + 1, core * 0.06)
     lane_gap = max(MIN_GAP, via * 2.2)
 
@@ -158,17 +184,17 @@ def ornament(w, h, seed):
         x = (0.05 + r() * 0.06) * w if left else (0.95 - r() * 0.06) * w
         if abs(x - cx) < core + lane_gap * 3:
             continue
-        y_end = (0.24 + r() * 0.52) * h
-        pts = _run(x, -lane_gap, x, y_end, core * 0.4)
-        _bundle(back, pts, 2 + int(r() * 2), lane_gap, via)
+        y_end = (0.14 + r() * 0.16) * h
+        pts = _run(x, -lane_gap, x, y_end, core * 0.3)
+        _bundle(back, pts, 2, lane_gap, via)
 
     clear = core + lane_gap * 2
     for corner in range(4):
         left = corner % 2 == 0
         top = corner < 2
         y = (0.08 + r() * 0.08) * h if top else (0.92 - r() * 0.08) * h
-        x_end = (0.07 + r() * 0.11) * w if left else (0.93 - r() * 0.11) * w
-        drop = (12 + r() * 20) * (1 if top else -1)
+        x_end = (0.06 + r() * 0.07) * w if left else (0.94 - r() * 0.07) * w
+        drop = (10 + r() * 12) * (1 if top else -1)
         crosses = abs(y - cy) < clear or abs(y + drop - cy) < clear
         reaches = x_end > cx - clear if left else x_end < cx + clear
         if crosses and reaches:
@@ -176,18 +202,35 @@ def ornament(w, h, seed):
         pts = _run(-lane_gap if left else w + lane_gap, y, x_end, y + drop, core * 0.5)
         _bundle(back, pts, 2 + int(r() * 2), lane_gap, via)
 
+    # A band this short has no room for an orbit above and below the hero, so
+    # the satellites sit out to the sides and the bus arc carries the link over
+    # the top or under the bottom.
     small = []
-    for i in range(2):
-        a = math.pi * (0.25 + i * 0.9) + r() * 0.5
-        rad = core * (0.30 + r() * 0.12)
-        sx = cx + math.cos(a) * (core + rad + lane_gap * 4)
-        sy = cy + math.sin(a) * (core + rad + lane_gap * 2) * 0.7
-        if rad + 2 < sx < w - rad - 2 and rad + 2 < sy < h - rad - 2:
-            small.append((sx, sy, rad))
+    for side in (-1, 1):
+        rad = core * (0.26 + r() * 0.10)
+        tilt = (r() - 0.5) * 0.5
+        reach = core + rad + lane_gap * 5
+        sx = cx + side * math.cos(tilt) * reach
+        sy = cy + math.sin(tilt) * reach
+        if not (rad * 0.4 < sx < w - rad * 0.4 and rad + 2 < sy < h - rad - 2):
+            continue
+        small.append((sx, sy, rad, math.atan2(sy - cy, sx - cx), math.hypot(sx - cx, sy - cy)))
+
+    links = []
+    bus = core + lane_gap * 2.5
+    if len(small) == 2 and cy - bus - lane_gap > 0 and cy + bus + lane_gap < h:
+        ends = [(a, dist - rad - via * 1.4) for _sx, _sy, rad, a, dist in small]
+        if min(e[1] for e in ends) - bus >= lane_gap:
+            left = min(ends, key=lambda e: math.cos(e[0]))
+            right = max(ends, key=lambda e: math.cos(e[0]))
+            over_top = r() < 0.5
+            first, second = (left, right) if over_top else (right, left)
+            _link(links, cx, cy, first, second, bus, via, 1 + int(r() * 2), lane_gap)
 
     render(d, back, (0, 0), FAINT)
-    for sx, sy, rad in small:
-        render(d, sigil(rad, int(r() * 999999), hub=False), (sx, sy), FAINT)
+    render(d, links, (0, 0), ORNAMENT)
+    for sx, sy, rad, _a, _dist in small:
+        render(d, sigil(rad, int(r() * 999999), hub=False), (sx, sy), ORNAMENT)
     render(d, sigil(core, seed), (cx, cy), ORNAMENT)
     return img
 
@@ -202,6 +245,11 @@ def render(draw, prims, origin, ink=ORNAMENT, width=1):
         kind = prim[0]
         if kind == "circle":
             draw.ellipse(box(prim[1], prim[2]), outline=ink, width=width)
+        elif kind == "punch":
+            draw.ellipse(box(prim[1], prim[2]), fill=PAPER)
+        elif kind == "arc":
+            _, c, rad, a0, a1 = prim
+            draw.arc(box(c, rad), math.degrees(a0), math.degrees(a1), fill=ink, width=width)
         elif kind == "line":
             (x1, y1), (x2, y2) = prim[1], prim[2]
             draw.line([round(ox + x1), round(oy + y1), round(ox + x2), round(oy + y2)], fill=ink, width=width)
