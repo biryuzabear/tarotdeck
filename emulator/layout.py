@@ -16,6 +16,19 @@ ROWS = 3
 MENU_TOP = 270
 ROW_H = (H - MENU_TOP) // ROWS
 
+LED_ROWS = 6
+"""Lenses a side. Twelve on the chain, six a side, mirrored.
+
+Six is what the glass takes cleanly: over its 81.12 mm the pitch is 13.52 mm, and a
+10 mm board leaves 3.52 mm between neighbours — room for the rib that stops one lit
+lens smearing into the next. Eight a side would fit the length but leave 0.14 mm,
+and no rib fits in that.
+
+They are spaced against the glass rather than against the menu, because they mark
+what is drawn on it: pages, a level, a rainbow. A menu row then takes the lens
+nearest its own centre.
+"""
+
 MARGIN = 16
 TITLE_Y = 12
 
@@ -118,6 +131,22 @@ def row_centre(index):
 
 def row_fraction(index):
     return row_centre(index) / H
+
+
+def led_fraction(index):
+    """Where lens `index` sits down the glass: 1/12, 3/12 ... 11/12."""
+    return (2 * index + 1) / (2 * LED_ROWS)
+
+
+def led_for_menu_row(index):
+    """The lens nearest a menu row's centre.
+
+    The menu lives in the bottom of the screen, so its three rows land on the bottom
+    three lenses and the top three stay dark — which is itself a reading of where
+    you are.
+    """
+    target = row_fraction(index)
+    return min(range(LED_ROWS), key=lambda i: abs(led_fraction(i) - target))
 
 
 def read_line_y(index):

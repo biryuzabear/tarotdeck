@@ -145,13 +145,15 @@ class Session:
     def light_selection(self):
         """Where you are in a list, and how long the list is. Never drawn on glass."""
         if self.state == "settings":
-            self.strip.position(self.settings.row, of=self.settings.rows)
+            rows = [layout.led_for_menu_row(i) for i in range(self.settings.rows)]
+            self.strip.select(layout.led_for_menu_row(self.settings.row), rows)
             return
         items = self._items()
-        if items:
-            self.strip.position(self.index % self.strip.rows, of=len(items))
-        else:
+        if not items:
             self.strip.off()
+            return
+        rows = [layout.led_for_menu_row(i) for i in range(len(items))]
+        self.strip.select(layout.led_for_menu_row(self.index % len(items)), rows)
 
     # ------------------------------------------------------------------- states
 
@@ -173,7 +175,7 @@ class Session:
     def _enter_spread(self):
         self.status = "how many cards"
         self.glass.full(screens.menu("TAROT", SPREADS, self.mode, 4242, language=self.language))
-        self.strip.position(self.index, of=len(SPREADS))
+        self.light_selection()
 
     def _enter_settings(self):
         self.status = "settings"
@@ -228,7 +230,7 @@ class Session:
     def _enter_confirm(self):
         self.status = "is that the question"
         self.glass.mono_partial(screens.confirm(self.question, CONFIRM_ITEMS, language=self.language))
-        self.strip.position(self.index, of=len(CONFIRM_ITEMS))
+        self.light_selection()
 
     def _enter_draw(self):
         self.status = "the cards turn"
@@ -252,7 +254,10 @@ class Session:
         self._spawn(job)
         self.buzzer.sequence((1320, 1760), 40)
         for i, (name, orientation) in enumerate(self.cards, 1):
-            self.strip.position(i - 1, of=len(self.cards))
+            self.strip.select(
+                layout.led_for_menu_row(i - 1),
+                [layout.led_for_menu_row(k) for k in range(len(self.cards))],
+            )
             self.glass.full(
                 screens.card(
                     name, index=i, total=len(self.cards),
@@ -299,7 +304,7 @@ class Session:
         items = self._items()
         if items:
             self.index = (self.index + delta) % len(items)
-            self.strip.position(self.index, of=len(items))
+            self.light_selection()
             self.buzzer.click()
         elif self.state in ("read", "done") and len(self.pages) > 1:
             self.page = (self.page + delta) % len(self.pages)

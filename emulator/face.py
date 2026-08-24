@@ -11,7 +11,7 @@ TOP_MARGIN = 16.0
 SCREEN_W, SCREEN_H = 47.32, 81.12
 BOARD_H = 96.5
 GEAR_D = 12.0
-LED_D = 9.0
+LED_D = 7.6
 LED_VISIBLE = 2 / 3
 SIDE_GAP = (BODY_W - SCREEN_W) / 2
 
@@ -40,7 +40,7 @@ class Face:
             round(SCREEN_W * self.px),
             round(SCREEN_H * self.px),
         )
-        self.leds = layout.ROWS
+        self.leds = layout.LED_ROWS
 
     def mm(self, v):
         return round(v * self.px)
@@ -50,7 +50,7 @@ class Face:
         out = []
         radius = self.mm(LED_D / 2)
         for i in range(self.leds):
-            cy = round(self.screen_rect.top + self.screen_rect.height * layout.row_fraction(i))
+            cy = round(self.screen_rect.top + self.screen_rect.height * layout.led_fraction(i))
             for side, cx in (
                 (-1, self.screen_rect.left - self.mm(SIDE_GAP * 0.42)),
                 (1, self.screen_rect.right + self.mm(SIDE_GAP * 0.42)),

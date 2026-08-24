@@ -6,7 +6,7 @@ meanings: colour is the deck's condition, motion means it is working, and the co
 of lit rows is where you are in a list.
 """
 
-ROWS = 3
+ROWS = 6
 PER_ROW = 2
 
 OFF = (0, 0, 0, 0)
@@ -51,10 +51,19 @@ class Strip:
     # the vocabulary
 
     def position(self, index, of=None):
-        """Where you are in a list: one row lit, the rest of the list dim."""
+        """Where you are in a list of `of` items that starts at the top lens."""
         of = of if of is not None else self.rows
+        self.select(index, range(min(of, self.rows)))
+
+    def select(self, active, among):
+        """One lit row, the rest of the set dim, everything else dark.
+
+        `among` is which lenses the list occupies — not always the top ones, since a
+        menu sits at the bottom of the screen and takes the lenses beside it.
+        """
+        among = set(among)
         self.show_rows([
-            SELECTED if i == index else (DIM if i < of else OFF)
+            SELECTED if i == active else (DIM if i in among else OFF)
             for i in range(self.rows)
         ])
 

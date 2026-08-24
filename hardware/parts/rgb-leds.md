@@ -9,7 +9,7 @@ Addressable, single data line. Several of them, loose/discrete, round form.
 | Protocol | single-wire, GRB order, 800 kHz |
 | Voltage | 5 V |
 | Form | round modules on board, **10 × 10 mm each** |
-| Quantity | plenty on hand; **6–8** planned |
+| Quantity | plenty on hand; **12** — six a side, mirrored |
 
 The level-shifter question is covered in the ring's file — same protocol, and
 they chain onto one data line.
@@ -24,13 +24,14 @@ The replacement is in-kernel and official, added December 2024, present on both
 Bookworm and Trixie. One line in `/boot/firmware/config.txt`:
 
 ```
-dtoverlay=ws2812-pio,gpio=21,num_leds=8
+dtoverlay=ws2812-pio,gpio=21,num_leds=12
 ```
 
 - **Any bank-0 GPIO, 0–27** — arbitrary choice, no pin whitelist. Default is 4.
 - Uses RP1's **PIO block, not PWM and not SPI**, so it collides with neither the
   display on SPI0 nor the buzzer on a hardware PWM channel. The only scarce
   resource is PIO itself: 4 state machines, 4 strips maximum. We need one.
+- Twelve draw 0.72 A at full white; at the brightness used, about 0.14 A.
 - Gamma correction and global brightness are applied in the kernel.
 
 It appears as a plain character device, `/dev/leds0`. No library, just file

@@ -142,7 +142,7 @@ class Window:
             "76 x 126 mm body",
             "280 x 480 at 150 dpi",
             "47.3 x 81.1 mm of glass",
-            "3 rows x 2 LEDs, mirrored",
+            f"{self.strip.rows} rows x {self.strip.per_row} LEDs, mirrored",
         ):
             self.screen.blit(self.small.render(line, True, (96, 96, 104)), (x, y))
             y += 15

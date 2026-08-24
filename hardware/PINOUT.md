@@ -136,6 +136,19 @@ of the 3.7" template and ~20 other e-Paper wikis, and against the driver HAT
 manual. Two incompatible conventions circulate in blogs, and Waveshare's own
 boilerplate says photo colours are "for reference only".
 
+Our own cable, read off the board's silkscreen — good for this cable only:
+
+| Signal | Wire | Header pin |
+|---|---|---|
+| VCC | grey | 17 |
+| GND | brown | 20 |
+| DIN | blue | 19 |
+| CLK | yellow | 23 |
+| CS | orange | 24 |
+| DC | green | 22 |
+| RST | white | 11 |
+| BUSY | purple | 18 |
+
 **Connector order on the board**, left to right, silkscreened, confirmed against
 the schematic's H1 netlist:
 

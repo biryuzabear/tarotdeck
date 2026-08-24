@@ -203,9 +203,25 @@ a flat-sided crescent, cut on the outside, facing the screen.
 The screen splits in two: the **top informs**, the **bottom chooses**. Menu rows
 live in the lower ~44 % of the glass, and the LEDs are level with them.
 
-Both chamfers light together: one menu row is two LEDs, mirrored. **Three rows,
-six LEDs on the chain** — a menu never needs more than three items, so one lit
-row is one menu line, and the rows are big enough to read at arm's length.
+Both chamfers light together: one row is two LEDs, mirrored. **Six rows, twelve
+LEDs on the chain**  — spaced against the glass rather than against the menu,
+because they mark what is drawn on it.
+
+Six is what the glass takes cleanly. Over its 81.12 mm the pitch is 13.52 mm, and a
+10 mm board leaves **3.52 mm between neighbours** — room for the rib that stops one
+lit lens smearing into the next. Eight a side would also fit the length but leave
+0.14 mm, and no rib fits in that. Centres sit at 6.76, 20.28, 33.80, 47.32, 60.84
+and 74.36 mm from the top of the glass, so the run clears each end by 1.76 mm.
+
+Twelve at full white would draw 0.72 A; at the brightness actually used it is about
+0.14 A, which the 3 A budget does not notice.
+
+What the extra rows buy is not more light but more meaning. A reading runs to at
+most six pages, and six rows show that exactly — which page you are on, out of how
+many, without a number. A rainbow over six steps reads as movement where three read
+as blinking. And a menu, which is still three items, takes the three lenses beside
+it rather than the top of the chain: the bottom three light, the top three stay
+dark, and that is itself a reading of where you are.
 
 Three items also means Settings has no slot in the list. It is reached by ticking
 the left gear back from the top menu, where there is otherwise nowhere to go.
