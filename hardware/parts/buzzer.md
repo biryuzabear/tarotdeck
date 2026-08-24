@@ -16,14 +16,16 @@ suits the retro aesthetic better.
 | Count | **one for now** — three would have been three voices, but also ~600 mA on a 3 A budget |
 | Drive | PWM, 50 % duty; frequency sets pitch |
 | Useful range | piezo elements resonate ~2–4 kHz; magnetic go lower, ~1–3 kHz |
-| Model | ? |
+| Model | SunFounder AI Lab Kit passive buzzer |
+| Drive circuit | S8050 NPN + 1 kΩ base resistor — [SunFounder's own page](https://docs.sunfounder.com/projects/ai-lab-kit/en/latest/python/1.4_passive_buzzer_python.html) |
 
 One buzzer = one voice at a time. Melodies yes, chords no. Adding voices later
 costs a hardware PWM channel each — GPIO 12, 13 and 19 are free, 18 is taken by
 the e-Paper.
 
-Candidate seen but not bought: 12 × 8.5 mm, **16 Ω** — that resistance means
-magnetic, not piezo, so ~200 mA at 3.3 V and a transistor is mandatory.
+SunFounder wires it through a transistor, so treat it as magnetic: the GPIO
+cannot source what the coil wants. Their schematic has **no flyback diode** —
+add one across the buzzer for the enclosed build.
 
 ## Direct GPIO or transistor?
 Depends which kind it is:

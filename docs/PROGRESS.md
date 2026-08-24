@@ -15,7 +15,22 @@
 - LED ring (40 mm, fits nowhere) · OLED (too small to earn its space) ·
   gyroscope (no use that isn't done better by something else)
 
-## Unproven — nothing here has run on real hardware
+## Runs on real hardware
+First session on the assembled deck, 2026-08-25.
+
+- **The e-paper works.** SPI and I²C enabled on the Pi (both were commented out
+  in `/boot/firmware/config.txt`), Waveshare's library cloned, and the 3.7"
+  panel ran a full cycle: `init` → `Clear` → `display_4Gray` → `sleep`. Text and
+  a border came out on the panel. Debian 13 trixie, Python 3.13, everything from
+  apt — `spidev`, `gpiozero` and `lgpio` ship with the OS, `python3-pil` and
+  `python3-numpy` were added.
+- **The deck runs off the battery.** Pi 5 and the panel both, with no cable at
+  all. `EXT5V = 5.05 V` and `throttled=0x0` while refreshing the display.
+- **PiSugar does not answer on I²C** — `i2cdetect -y 1` is empty, no `0x57`.
+  Cause found, see `hardware/parts/pisugar.md`: two of the pogo pins do not
+  reach.
+
+## Unproven — mostly still on paper
 Ordered by how much it could invalidate:
 
 1. **Inference time.** Everything about the interaction assumes "it thinks for a
@@ -24,10 +39,11 @@ Ordered by how much it could invalidate:
 2. **Both models in 2 GB.** Fits at ~1.22 GB peak at Q8_0 — running one model at
    a time, with `-ub 64`. Architecture and sizes now check out on paper; see
    `docs/RUNTIME.md`.
-3. **The e-paper as a usable UI.** The fast mono refresh *is* in the Python driver
-   — `display_1Gray` loads the A2 waveform. Untested: how ~0.3 s actually looks
-   with text, and how many fast refreshes the panel takes before it needs a
-   cleaning full one.
+3. **The e-paper as a usable UI.** The panel and driver now run — what is still
+   untested is the fast mono refresh: `display_1Gray` loads the A2 waveform, but
+   how ~0.3 s actually looks with text, and how many fast refreshes the panel
+   takes before it needs a cleaning full one, is unknown. Only `display_4Gray`
+   has been exercised.
 4. **Current draw under real load**, measured with an inline USB-C meter.
 5. **The chamfer.** Wall thickness, diffusion, and bleed between LEDs — one small
    test print answers all three.

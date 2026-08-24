@@ -13,8 +13,16 @@ every row it can get: 31 columns by 22 rows is the whole glass minus a footer.
 W, H = 280, 480
 
 ROWS = 3
-MENU_TOP = 270
-ROW_H = (H - MENU_TOP) // ROWS
+ROW_H = 80
+MENU_TOP = H - ROWS * ROW_H
+"""The menu occupies the bottom half, and a row is exactly one lens pitch.
+
+It used to be 210 px in rows of 70 while the lenses divided the same glass by six,
+so the two grids disagreed and the top row sat 25 px — 4.2 mm — above the lens
+meant to mark it. A row of 80 px is one sixth of the panel, which is what a lens
+pitch is, so the three rows land on the bottom three lenses exactly rather than
+nearly.
+"""
 
 LED_ROWS = 6
 """Lenses a side. Twelve on the chain, six a side, mirrored.
@@ -121,8 +129,8 @@ CARD_RECT = (16, 8, 248, 424)
 CARD_NAME_Y = 448
 CARD_ORIENT_Y = 468
 
-ORNAMENT_TOP = 34
-ORNAMENT_H = 200
+ORNAMENT_TOP = 30
+ORNAMENT_H = 150
 
 
 def row_centre(index):

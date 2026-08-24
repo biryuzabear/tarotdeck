@@ -49,43 +49,96 @@ HAT. Not ours to use.
 Provisional. Every control pin except the buzzer is an arbitrary free choice and
 can move later; the point is to have something to build against.
 
+**28 wires.** The e-Paper goes straight onto the header. Everything else runs
+through a breadboard, so 3.3 V and ground are distributed on its rails instead
+of eating one header pin per device.
+
+### Breadboard rails — 2 wires
+| From | To |
+|---|---|
+| pin 1 — 3.3 V | rail `+` |
+| pin 6 — GND | rail `−` |
+
 ### e-Paper — 8 wires
 
-| Cable | Header pin | GPIO | Also known as | |
+| Wire | Header pin | GPIO | Also known as | Board label |
 |---|---|---|---|---|
-| VCC | **17** | 3.3 V rail | — | not pin 1 — see below |
-| GND | 20 | GND | — | |
-| DIN | 19 | GPIO 10 | **SPI0 MOSI** | fixed |
-| CLK | 23 | GPIO 11 | **SPI0 SCLK** | fixed |
-| CS | 24 | GPIO 8 | **SPI0 CE0** | fixed |
-| DC | 22 | GPIO 25 | plain GPIO | movable |
-| RST | 11 | GPIO 17 | plain GPIO | movable |
-| BUSY | 18 | GPIO 24 | plain GPIO | movable |
+| grey | **17** | 3.3 V rail | — | `VCC` — not pin 1, see below |
+| brown | 20 | GND | — | `GND` |
+| blue | 19 | GPIO 10 | **SPI0 MOSI** — fixed | `DIN` |
+| yellow | 23 | GPIO 11 | **SPI0 SCLK** — fixed | `CLK` |
+| orange | 24 | GPIO 8 | **SPI0 CE0** — fixed | `CS` |
+| green | 22 | GPIO 25 | plain GPIO | `DC` |
+| white | 11 | GPIO 17 | plain GPIO | `RST` |
+| purple | 18 | GPIO 24 | plain GPIO | `BUSY` |
 
-### Controls
+Pin 21 (MISO) stays empty — the display never replies.
 
-| What | Wire | Header pin | GPIO | Also known as |
-|---|---|---|---|---|
-| Encoder — right gear | A | 29 | GPIO 5 | plain GPIO |
-| | B | 31 | GPIO 6 | plain GPIO |
-| | C (common) | 30 | GND | — |
-| Left gear, tick left | switch | 15 | GPIO 22 | plain GPIO |
-| Left gear, tick right | switch | 16 | GPIO 23 | plain GPIO |
-| | common | 14 | GND | — |
-| Touch pad — dictation | SIG | 37 | GPIO 26 | plain GPIO |
-| | VCC | 1 | 3.3 V rail | — |
-| | GND | 34 | GND | — |
-| WS2812 chain | DIN | 40 | GPIO 21 | PCM DOUT — unused, see below |
-| | +5 V | 4 | 5 V rail | — |
-| | GND | 39 | GND | — |
-| Buzzer | + | 33 | GPIO 13 | **hardware PWM** — required |
-| | − | 25 | GND | — |
+### Rotary encoder, right gear — 4 wires
 
-Grounds are assigned one wire per pin only so nothing has to be doubled up on a
-single Dupont socket. Electrically they are all the same net. Pins 6 and 9 stay
-spare.
+| From | To | GPIO |
+|---|---|---|
+| pin 29 | `CLK` | GPIO 5 |
+| pin 31 | `DT` | GPIO 6 |
+| rail `+` | `+` | — |
+| rail `−` | `GND` | — |
 
-The encoder's push-button is **not used** — decided. SW stays unconnected.
+`SW` left unconnected — the push-button is not used. Decided.
+
+### Left gear — two buttons, 2 wires each
+
+| From | To | GPIO |
+|---|---|---|
+| pin 15 | one leg, tick left | GPIO 22 |
+| rail `−` | the leg **diagonally opposite** | — |
+| pin 16 | one leg, tick right | GPIO 23 |
+| rail `−` | the leg diagonally opposite | — |
+
+A 4-leg tactile switch has only two contacts — the legs are joined in pairs down
+each side. Take legs from opposite sides or the button is a permanent short.
+
+Internal pull-ups, so no external resistors and no `+` wire: the pin idles high
+through the chip's own resistor and the button drags it to ground.
+
+### Touch pad — 3 wires
+
+| From | To | GPIO |
+|---|---|---|
+| pin 37 | `SIG` | GPIO 26 |
+| rail `+` | `VCC` | — |
+| rail `−` | `GND` | — |
+
+**3.3 V only.** The output is push-pull, so it drives whatever its supply is
+straight into the GPIO. 5 V here kills the pin. No pull resistor either way.
+
+### WS2812 chain — 3 wires
+
+| From | To | GPIO |
+|---|---|---|
+| pin 40 | `DIN` | GPIO 21 |
+| pin 4 — 5 V | `+5V` | — |
+| pin 39 — GND | `GND` | — |
+
+Power and ground come straight off the header, not from the breadboard rails —
+eight LEDs at full white is close to half an amp. Data goes into `DIN`; the
+arrow on the module gives the chain direction.
+
+### Buzzer — 4 wires plus two parts on the breadboard
+
+| From | To | GPIO |
+|---|---|---|
+| pin 33 | 1 kΩ resistor | GPIO 13, **hardware PWM** |
+| 1 kΩ resistor | transistor base (middle leg) | — |
+| transistor emitter | rail `−` | — |
+| transistor collector | buzzer − | — |
+| buzzer + | pin 2 — 5 V | — |
+
+S8050 NPN, per SunFounder's own circuit. The GPIO cannot source the ~200 mA a
+magnetic buzzer wants; the transistor carries it and the pin only steers.
+Resistor and transistor share a breadboard row, so no wire between them.
+
+No flyback diode in SunFounder's circuit. Add one across the buzzer for the real
+build — a coil switched thousands of times a second kicks back at the transistor.
 
 ## Why these pins
 

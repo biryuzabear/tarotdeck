@@ -223,6 +223,12 @@ as blinking. And a menu, which is still three items, takes the three lenses besi
 it rather than the top of the chain: the bottom three light, the top three stay
 dark, and that is itself a reading of where you are.
 
+**A menu row is exactly one lens pitch.** It used to be 210 px in rows of 70 while
+the lenses divided the same glass by six, so the two grids disagreed and the top row
+sat 25 px — 4.2 mm — above the lens meant to mark it. A row is 80 px now, one sixth
+of the panel and 13.52 mm on the glass, so the menu band is 240 px, exactly the
+bottom half, and the three rows land on the bottom three lenses to the pixel.
+
 Three items also means Settings has no slot in the list. It is reached by ticking
 the left gear back from the top menu, where there is otherwise nowhere to go.
 
