@@ -101,10 +101,12 @@ Measured on the deck: `base.en` transcribes 20 s of speech in **2.9 s**, of whic
 `sources.for_mode` falls through to `MeaningsReader`, which needs no weights and is
 about the cards actually drawn. That is what the deck is doing today.
 
-Putting the fine-tune on it is unfinished work, and the obstacle is a format one:
+Putting the fine-tune on it is unfinished work, and the obstacle was a format one:
 our export is **MLX 8-bit**, which is Apple-only, while the Pi needs **GGUF** for
-`llama.cpp`. See `tarot_model/exports/qwen3_5_0.8b_v2_q8/WHERE.md` for where the
-weights are and how they must be called.
+`llama.cpp`. That conversion is now done — the GGUF sits on the Drive beside the
+MLX weights — and what remains is quantizing it to Q8_0 on the Pi, serving it, and
+measuring what a reading costs. The steps are written out in
+`tarot_model/exports/qwen3_5_0.8b_v2_q8/WHERE.md`.
 
 ## Bring-up scripts
 `hardware/hwtest/` holds the two programs that proved the parts one at a time —
