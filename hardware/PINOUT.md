@@ -111,17 +111,42 @@ through the chip's own resistor and the button drags it to ground.
 **3.3 V only.** The output is push-pull, so it drives whatever its supply is
 straight into the GPIO. 5 V here kills the pin. No pull resistor either way.
 
-### WS2812 chain — 3 wires
+### WS2812 chain — 3 wires, testing at 3.3 V
+
+The module has four pads — `VCC`, `GND`, and data in/out as `DIN`/`RGB` and
+`DOUT`. `DOUT` chains to a second module's `DIN`; unused here, one module only.
 
 | From | To | GPIO |
 |---|---|---|
-| pin 40 | `DIN` | GPIO 21 |
-| pin 4 — 5 V | `+5V` | — |
-| pin 39 — GND | `GND` | — |
+| pin 40 | `DIN` (labelled `RGB` on this module) | GPIO 21 |
+| rail `+` | `VCC` | — |
+| rail `−` | `GND` | — |
 
-Power and ground come straight off the header, not from the breadboard rails —
-eight LEDs at full white is close to half an amp. Data goes into `DIN`; the
-arrow on the module gives the chain direction.
+**Testing at 3.3 V on purpose — and it works.** WS2812B is nominally a 5 V part,
+but running it at 3.3 V sidesteps the logic-level question entirely: the data
+line and the supply match, so no translator or diode is needed. The worry was
+that 3.3 V sits close to or under the chip's usual ~3.5 V floor, and it might run
+dim, misfire on colour, or not init at all.
+
+Tried 2026-08-25: all twelve light, a single-pixel chase steps cleanly around the
+chain, and red, green, blue and white all come out right. No level shifting
+needed. Driven by the in-kernel overlay, one line in `config.txt`:
+
+```
+dtoverlay=ws2812-pio,gpio=21,num_leds=12
+```
+
+`num_leds` must match the chain — set to 8 by mistake, the last four stay dark
+and nothing warns you.
+
+If it turns out marginal under sustained white: move `VCC` to pin 4 (5 V, straight off the header — the
+rail's `+` is 3.3 V) and reopen the level-shifting question. Both 5 V header
+pins read as connected to PiSugar — expected, not a conflict. PiSugar feeds the
+Pi's 5 V rail *through* those pins from underneath; it doesn't occupy them as a
+device would. The header itself stays physically free on top —
+[pisugar.md](parts/pisugar.md) confirms the pogo-pin mount doesn't cover it.
+The real ceiling is PiSugar's 3 A output limit, shared with the Pi itself under
+load — see [POWER.md](../POWER.md).
 
 ### Buzzer — 4 wires plus two parts on the breadboard
 

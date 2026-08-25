@@ -20,6 +20,28 @@ part sold unbranded.
 | Drivers | none needed on Linux / Raspberry Pi OS; enumerates as `card 1, device 0` |
 | Pi tutorial | http://wiki.sunfounder.cc/index.php?title=To_use_USB_mini_microphone_on_Raspbian |
 
+## It arrives with the capture gain at zero
+Measured 2026-08-25. The dongle enumerates on its own, no driver, but ALSA's
+`Mic` capture control defaults to **0 of 16** — and a recording then comes out
+the right length, the right format, and digitally silent. Easy to read as a dead
+capsule.
+
+```
+amixer -c 0 sset Mic 16 unmute          # 100%, +23.81 dB
+amixer -c 0 sset "Auto Gain Control" off
+```
+
+Only two controls exist: `Mic` and `Auto Gain Control`. AGC is off here so the
+level stays flat for Whisper.
+
+At full gain, speech from ~20 cm reads: floor ~100 RMS, words 500–1000, peaks
+~5500 of 32768, no clipping. Words separate from pauses by about 10x, which is
+what matters for endpointing. Further than that and it hears the room, not you —
+the capsule is −47 dBV/Pa.
+
+On this unit it comes up as **`card 0`**, not `card 1` as the part notes below
+say — the Pi's HDMI outputs land on 1 and 2.
+
 ## Unconfirmed
 - Whether it declares USB Audio Class 1.0 or 2.0 — vendor never says
 - **Native sample rates.** SunFounder's own tutorial uses `arecord -D plughw:1,0`,

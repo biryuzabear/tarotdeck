@@ -59,10 +59,27 @@ Worth doing on the same print as the chamfer test — both are small coupons and
 both gate wall thickness.
 
 ## Two behaviours that matter here
-**A held touch does not stay asserted.** The chip auto-recalibrates: normally
-every ~4 s, and ~16 s after a release. Users report a sustained touch being
-dropped after **10–15 seconds**. For a hold-to-talk control this is a real
-problem — a question spoken for longer than that would cut off.
+**A held touch does not stay asserted, and ours gives up sooner than the
+reports.** Measured on our unit, 2026-08-25: a sustained touch is dropped after
+about **7.5 seconds**, repeatably, hold after hold. Not the 10–15 s users report.
+Below that ceiling it is not steady either — holds collapsed at two or three
+seconds while the finger never moved.
+
+**Once it has let go, a resting finger is invisible.** Held for ten seconds, the
+output drops at 7.5 and then nothing happens at all: no edges, no pulses, no
+difference between a finger still on the pad and a finger lifted away. The
+recalibration takes the finger into the baseline. So the state cannot be
+recovered in software — there is no signal left to read. A brief flurry of
+zero-length pulses does appear if the finger *shifts* slightly, which is what
+misled us at first; a truly still finger produces silence.
+
+**Hold-to-talk is therefore off the table** for this control, and not for lack
+of a clever threshold. What the pad does do reliably, in every test, is register
+short taps. So the interaction has to be tap-on / tap-off, with the toggle held
+in our own code — which also means the `TOG` jumper stays unused.
+
+**Through a plastic wall it still works** — confirmed by hand, thickness not yet
+measured. The ladder test below still needs running.
 
 **Don't touch it while the Pi boots.** There's a ~0.5 s stabilisation at power-on
 during which the function is disabled, and the baseline it captures includes

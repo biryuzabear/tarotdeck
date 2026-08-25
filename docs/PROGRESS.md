@@ -26,6 +26,15 @@ First session on the assembled deck, 2026-08-25.
   `python3-numpy` were added.
 - **The deck runs off the battery.** Pi 5 and the panel both, with no cable at
   all. `EXT5V = 5.05 V` and `throttled=0x0` while refreshing the display.
+- **Every input responds.** Rotary encoder counts both directions with no
+  missed steps, both tick buttons fire and are distinguishable, the touch pad
+  reads every tap. Nothing idles stuck.
+- **Buzzer sounds** — five tones, 1–3 kHz, on software PWM. The transistor
+  stage works. Hardware PWM not set up yet.
+- **All twelve LEDs light**, chase and four colours, on the in-kernel
+  `ws2812-pio` overlay with VCC at 3.3 V. `dtoverlay=ws2812-pio,gpio=21,num_leds=12`.
+- **The microphone records speech** — but only after raising the ALSA capture
+  gain, which ships at zero. See `hardware/parts/usb-microphone.md`.
 - **PiSugar does not answer on I²C** — `i2cdetect -y 1` is empty, no `0x57`.
   Cause found, see `hardware/parts/pisugar.md`: two of the pogo pins do not
   reach.
