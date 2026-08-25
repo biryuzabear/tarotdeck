@@ -6,8 +6,18 @@ meanings: colour is the deck's condition, motion means it is working, and the co
 of lit rows is where you are in a list.
 """
 
+import os
+
 ROWS = 6
 PER_ROW = 2
+
+DEVICE = os.environ.get("TAROTDECK_LEDS", "/dev/leds0")
+"""The kernel's WS2812 chain, when there is one.
+
+`dtoverlay=ws2812-pio,gpio=21,num_leds=12` in `config.txt` creates it. Opening it
+needs root, and `num_leds` there must match `ROWS * PER_ROW` here — set it short and
+the far end of the chain simply stays dark with nothing to say so.
+"""
 
 OFF = (0, 0, 0, 0)
 SELECTED = (200, 150, 40, 0)
@@ -18,22 +28,42 @@ TROUBLE = (70, 12, 12, 0)
 
 
 class Strip:
-    def __init__(self, rows=ROWS, per_row=PER_ROW):
+    def __init__(self, rows=ROWS, per_row=PER_ROW, device=None):
         self.rows = rows
         self.per_row = per_row
         self.num_leds = rows * per_row
         self.brightness = 255
         self.pixels = [OFF] * self.num_leds
+        if device is None:
+            device = DEVICE if os.path.exists(DEVICE) else None
+        self.device = device
 
     def write(self, data, offset=0):
         if offset == 0 and len(data) == 1:
             self.brightness = data[0]
+            self._emit(data)
             return
         count = len(data) // 4
         for i in range(count):
             self.pixels[i] = tuple(data[i * 4 : i * 4 + 4])
         for i in range(count, self.num_leds):
             self.pixels[i] = OFF
+        self._emit(b"".join(bytes(p) for p in self.pixels))
+
+    def _emit(self, data):
+        """Out to the chain, if this machine has one.
+
+        Always the whole frame: a short write blanks every LED past its end, so the
+        model is serialised in full rather than the caller's fragment being passed
+        through.
+        """
+        if not self.device:
+            return
+        try:
+            with open(self.device, "wb") as chain:
+                chain.write(bytes(data))
+        except OSError:
+            self.device = None
 
     def show_rows(self, rows):
         data = bytearray()

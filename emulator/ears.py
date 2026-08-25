@@ -14,6 +14,7 @@ Whisper is English-only here, as docs/RUNTIME.md decided. The Russian program is
 online, and what it does about transcription is unsettled — noted in Open.
 """
 
+import os
 import queue
 import threading
 import time
@@ -215,5 +216,191 @@ class WhisperEars(Ears):
             raise EarsError(f"whisper: {exc}") from exc
         text = (result.get("text") or "").strip()
         if not text:
+            raise EarsError("nothing was said")
+        return text
+
+
+class ArecordMicrophone:
+    """Capture through ALSA, the way the deck itself has to.
+
+    `sounddevice` would need PortAudio built on the Pi for no gain: `arecord` is
+    already there, already the thing we tested the microphone with, and streaming
+    its raw output gives the same live level the lenses need.
+
+    The capture gain matters more than the code. This dongle ships with ALSA's `Mic`
+    control at 0 of 16 — recordings come out the right length and digitally silent —
+    so it is raised on open rather than left to whatever the card last remembered.
+    """
+
+    def __init__(self, rate=RATE, cap=CAP, device="plughw:0,0", gain=16):
+        self.rate = rate
+        self.cap = cap
+        self.device = device
+        self.gain = gain
+        self.proc = None
+        self.chunks = []
+        self.reader = None
+        self.spoke = False
+        self.started = 0.0
+        self.peak = 0.0
+        self._quiet_since = None
+
+    def _set_gain(self):
+        import subprocess
+
+        for control, value in (("Mic", str(self.gain)), ("Auto Gain Control", "off")):
+            subprocess.run(
+                ["amixer", "-c", "0", "sset", control, value],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+            )
+
+    def start(self):
+        import subprocess
+
+        self._set_gain()
+        self.chunks = []
+        self.peak = 0.0
+        self.spoke = False
+        self._quiet_since = None
+        self.started = time.monotonic()
+        self.proc = subprocess.Popen(
+            ["arecord", "-D", self.device, "-f", "S16_LE", "-r", str(self.rate),
+             "-c", "1", "-t", "raw"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        )
+        self.reader = threading.Thread(target=self._drain, daemon=True)
+        self.reader.start()
+
+    def _drain(self):
+        import numpy as np
+
+        proc = self.proc
+        block = self.rate // 16 * 2          # about 60 ms of 16-bit mono
+        while proc and proc.poll() is None:
+            data = proc.stdout.read(block)
+            if not data:
+                break
+            self.chunks.append(data)
+            samples = np.frombuffer(data, dtype="<i2")
+            if samples.size:
+                self.peak = float(np.abs(samples).max()) / 32768.0
+                if self.peak > SILENCE_LEVEL:
+                    self.spoke = True
+
+    def elapsed(self):
+        return time.monotonic() - self.started if self.started else 0.0
+
+    def level(self):
+        return min(1.0, self.peak * 8)
+
+    def silent_for(self):
+        if not self.spoke:
+            return 0.0
+        if self.peak > SILENCE_LEVEL:
+            self._quiet_since = None
+            return 0.0
+        if self._quiet_since is None:
+            self._quiet_since = time.monotonic()
+        return time.monotonic() - self._quiet_since
+
+    def stop(self):
+        import numpy as np
+
+        if self.proc is None:
+            return None
+        self.proc.terminate()
+        try:
+            self.proc.wait(timeout=2)
+        except Exception:
+            self.proc.kill()
+        self.proc = None
+        if self.reader:
+            self.reader.join(timeout=1)
+            self.reader = None
+        raw = b"".join(self.chunks)
+        raw = raw[: len(raw) // 2 * 2]
+        if not raw:
+            return None
+        return np.frombuffer(raw, dtype="<i2").astype("float32") / 32768.0
+
+
+class WhisperCppEars(Ears):
+    """The Pi's ears: ALSA in, `whisper-cli` out.
+
+    Same seam as `WhisperEars` — capture in one object, transcription in a method —
+    so which machine this is changes nothing above `Ears`.
+    """
+
+    name = "whisper.cpp"
+    live = True
+
+    def __init__(self, binary, model, cap=CAP, device="plughw:0,0"):
+        self.binary = binary
+        self.model = model
+        self.cap = cap
+        self.microphone = ArecordMicrophone(cap=cap, device=device)
+
+    def start(self):
+        try:
+            self.microphone.start()
+        except Exception as exc:
+            raise EarsError(f"microphone: {exc}") from exc
+
+    def stop(self):
+        return self.microphone.stop()
+
+    def level(self):
+        return self.microphone.level()
+
+    def elapsed(self):
+        return self.microphone.elapsed()
+
+    def silent_for(self):
+        return self.microphone.silent_for()
+
+    def transcribe(self, take):
+        """A quiet take is refused before Whisper ever sees it.
+
+        Whisper invents words for silence — a blank take reliably comes back as
+        "You" or "Thank you." Judging the take on its own energy keeps that out.
+        """
+        import subprocess
+        import tempfile
+        import wave as wavefile
+
+        import numpy as np
+
+        if take is None or len(take) < RATE // 4:
+            raise EarsError("nothing was said")
+        if float(np.abs(take).max()) < SILENCE_LEVEL:
+            raise EarsError("nothing was said")
+
+        pcm = (np.clip(take, -1.0, 1.0) * 32767).astype("<i2").tobytes()
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as handle:
+            path = handle.name
+        with wavefile.open(path, "wb") as out:
+            out.setnchannels(1)
+            out.setsampwidth(2)
+            out.setframerate(RATE)
+            out.writeframes(pcm)
+
+        try:
+            result = subprocess.run(
+                [self.binary, "-m", self.model, "-f", path, "-t", "4", "-nt"],
+                capture_output=True, text=True, timeout=120,
+            )
+        except Exception as exc:
+            raise EarsError(f"whisper: {exc}") from exc
+        finally:
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+
+        if result.returncode != 0:
+            tail = (result.stderr or "").strip().splitlines()
+            raise EarsError(f"whisper: {tail[-1] if tail else 'failed'}")
+        text = " ".join(result.stdout.split())
+        if not text or text.strip("[](). ") in ("BLANK_AUDIO", "SILENCE"):
             raise EarsError("nothing was said")
         return text

@@ -1,13 +1,24 @@
-"""The passive buzzer. Real gpiozero call on a mock pin, plus an audible tone."""
+"""The passive buzzer.
 
-import math
+On the deck this is the whole story: `TonalBuzzer` drives GPIO 13 and the thing
+makes a noise. On a desk the pin is a mock and nothing would be heard, so the same
+tones are synthesised through the mixer as well — the pin logic stays genuine and
+the sound is only for the person at the keyboard.
+"""
+
 import struct
+import time
 
-import pygame
 from gpiozero import TonalBuzzer
 
 import mockpins  # noqa: F401  sets the pin factory
 import pins
+from board import IS_PI
+
+try:
+    import pygame
+except ImportError:
+    pygame = None
 
 RATE = 22050
 CLICK = 2200
@@ -27,11 +38,13 @@ class Buzzer:
         self.device = _DEVICE
         self.cache = {}
         self.level = "on"
-        try:
-            pygame.mixer.init(frequency=RATE, size=-16, channels=1, buffer=256)
-            self.audible = True
-        except pygame.error:
-            self.audible = False
+        self.audible = False
+        if pygame is not None and not IS_PI:
+            try:
+                pygame.mixer.init(frequency=RATE, size=-16, channels=1, buffer=256)
+                self.audible = True
+            except pygame.error:
+                self.audible = False
 
     LEVELS = ["on", "quiet", "off"]
     AMPLITUDE = {"on": 9000, "quiet": 2600, "off": 0}
@@ -68,12 +81,16 @@ class Buzzer:
         self.device.play(hz)
         if self.audible:
             self._tone(hz, ms).play()
+        if IS_PI:
+            # Nothing else is making this sound, so the pin has to be held for as
+            # long as the note is meant to last.
+            time.sleep(ms / 1000)
         self.device.stop()
 
     def sequence(self, notes, ms=26):
         for hz in notes:
             self.play(hz, ms)
-            pygame.time.wait(ms)
+            time.sleep(ms / 1000)
 
     def click(self):
         self.play(CLICK, 16)

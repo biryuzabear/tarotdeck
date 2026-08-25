@@ -1,53 +1,53 @@
-"""Real gpiozero devices on fake pins, driven from the keyboard."""
+"""The deck's four controls. Real gpiozero devices either way.
+
+On a Pi they sit on the header; on a desk they sit on mock pins that the keyboard
+drives. The devices themselves, and everything below them, are the same objects in
+both — which is the point of the emulator.
+"""
 
 import time
 
 from gpiozero import Button, RotaryEncoder
 
 import pins
+from board import IS_PI
 from mockpins import factory
 
 encoder = RotaryEncoder(a=pins.ENCODER_A, b=pins.ENCODER_B, max_steps=0)
-tick_left = Button(pins.BUTTON_LEFT)
-tick_right = Button(pins.BUTTON_RIGHT)
+tick_left = Button(pins.BUTTON_LEFT, bounce_time=0.05)
+tick_right = Button(pins.BUTTON_RIGHT, bounce_time=0.05)
 touch = Button(pins.TOUCH, pull_up=None, active_state=True)
 
-_a = factory.pin(pins.ENCODER_A)
-_b = factory.pin(pins.ENCODER_B)
-_touch = factory.pin(pins.TOUCH)
+if not IS_PI:
+    _a = factory.pin(pins.ENCODER_A)
+    _b = factory.pin(pins.ENCODER_B)
+    _touch = factory.pin(pins.TOUCH)
 
+    def turn_cw():
+        _a.drive_low()
+        _b.drive_low()
+        _a.drive_high()
+        _b.drive_high()
 
-def turn_cw():
-    _a.drive_low()
-    _b.drive_low()
-    _a.drive_high()
-    _b.drive_high()
+    def turn_ccw():
+        _b.drive_low()
+        _a.drive_low()
+        _b.drive_high()
+        _a.drive_high()
 
+    def press(button):
+        factory.pin(button.pin.number).drive_low()
 
-def turn_ccw():
-    _b.drive_low()
-    _a.drive_low()
-    _b.drive_high()
-    _a.drive_high()
+    def release(button):
+        factory.pin(button.pin.number).drive_high()
 
+    def touch_down():
+        _touch.drive_high()
 
-def press(button):
-    factory.pin(button.pin.number).drive_low()
+    def touch_up():
+        _touch.drive_low()
 
-
-def release(button):
-    factory.pin(button.pin.number).drive_high()
-
-
-def touch_down():
-    _touch.drive_high()
-
-
-def touch_up():
-    _touch.drive_low()
-
-
-touch_up()
+    touch_up()
 
 
 STEPS_PER_DETENT = 1
@@ -103,3 +103,37 @@ class Dial:
             self.pending = 0
             return direction
         return 0
+
+
+QUIET_BEFORE_TAP = 1.0
+"""Silence the pad must show before a touch counts as a deliberate tap.
+
+Measured on our TTP223, 2026-08-25. A held touch is dropped after about 7.5 s, and
+around a release the line chatters: re-assertions at 0.45-0.9 s, and pulses so short
+both edges land in the same hundredth of a second. Deliberate taps never arrive
+inside that window, so the rule is not a duration filter but a quiet one — any edge
+at all, press or release, re-arms the timer, and a tap counts only when the line has
+been still for this long beforehand. Chatter therefore silences itself.
+
+The release edge is not used for anything. Once a tap is a tap, how long the finger
+stays makes no difference, which is what puts the chip's 7.5 s ceiling out of reach.
+"""
+
+
+class Tap:
+    """Pad edges in, deliberate taps out. The counterpart of `Dial`."""
+
+    def __init__(self, quiet=QUIET_BEFORE_TAP):
+        self.quiet = quiet
+        self.last_edge = 0.0
+
+    def edge(self, now=None):
+        """Any edge. Re-arms the timer and never counts as a tap."""
+        self.last_edge = time.monotonic() if now is None else now
+
+    def pressed(self, now=None):
+        """A press. True if it should be acted on."""
+        now = time.monotonic() if now is None else now
+        quiet = now - self.last_edge
+        self.last_edge = now
+        return quiet >= self.quiet

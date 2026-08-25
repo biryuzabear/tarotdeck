@@ -16,6 +16,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from board import IS_PI, home
 from readers import HttpReader, MeaningsReader, ScriptedReader
 
 SYSTEM_PROMPT = Path(__file__).resolve().parent.parent / "tarot_model" / "reading_system_prompt.txt"
@@ -31,6 +32,14 @@ CLOUD_KEY_ENV = "OPENAI_API_KEY"
 
 SCRIPTED_RATE = float(os.environ.get("TAROTDECK_SCRIPTED_RATE", "12"))
 WHISPER_MODEL = os.environ.get("TAROTDECK_WHISPER", "mlx-community/whisper-base.en-mlx")
+
+WHISPER_CPP = os.environ.get(
+    "TAROTDECK_WHISPER_BIN", str(home() / "whisper.cpp/build/bin/whisper-cli")
+)
+WHISPER_CPP_MODEL = os.environ.get(
+    "TAROTDECK_WHISPER_MODEL", str(home() / "whisper.cpp/models/ggml-base.en.bin")
+)
+MIC_DEVICE = os.environ.get("TAROTDECK_MIC", "plughw:0,0")
 
 
 def system_prompt():
@@ -104,6 +113,12 @@ def ears():
     import ears as ears_module
 
     if os.environ.get("TAROTDECK_TYPED"):
+        return ears_module.TypedEars()
+    if IS_PI:
+        if Path(WHISPER_CPP).exists() and Path(WHISPER_CPP_MODEL).exists():
+            return ears_module.WhisperCppEars(
+                binary=WHISPER_CPP, model=WHISPER_CPP_MODEL, device=MIC_DEVICE
+            )
         return ears_module.TypedEars()
     try:
         import mlx_whisper  # noqa: F401

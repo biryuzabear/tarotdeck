@@ -3,8 +3,14 @@
 Runs the deck on a desktop machine, with no Pi and no parts on hand. Everything
 except the physical panel, contact bounce and the battery lives here.
 
+**The same tree runs on the deck.** `run_deck.py` is the entry point there and
+`board.py` decides which backend each seam takes; there is no second
+implementation. How the machine itself is set up is `../docs/DECK.md`.
+
 ```
-run.py              entry point — app in a thread, window on the main thread
+run.py              entry point on a desk — app in a thread, window on the main thread
+run_deck.py         entry point on the Pi — no window, no keyboard, real pins
+board.py            is this a Pi? the one place that asks
 face.py             the device drawn to size — body, gears, LED lenses, pad
 layout.py           where things sit on the panel; the face reads it for the LEDs
 gravure.py          the alchemy-sigil and PCB-trace ornament
@@ -13,8 +19,8 @@ mockpins.py         the one mock pin factory everything shares
 panel.py            the window: 280x480 portrait, four greys, flash, ghosting
 fake_epdconfig.py   the eleven names, and the SPI stream decoded back to pixels
 controls.py         real gpiozero devices on mock pins, driven from the keyboard
-leds.py             stand-in for /dev/leds0
-deck.py             a stand-in app: menu on the encoder, reading streamed by word
+leds.py             the six-row vocabulary, and /dev/leds0 when there is one
+session.py          the state machine; screens.py draws what it decides
 pins.py             mirror of hardware/PINOUT.md
 timings.py          refresh durations and the flash sequence — correct them here
 vendor/             Waveshare's own epd3in7.py and epdconfig.py, unmodified
@@ -30,7 +36,7 @@ python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
 | `left` / `right` (or `up` / `down`) | right gear — turn |
 | `z` | left gear, tick left — back |
 | `x` | left gear, tick right — confirm |
-| `space`, held | touch pad — dictation |
+| `space` | touch pad — tap to start dictation, tap again to stop |
 | `esc` | quit |
 
 ## Pointing it at a model
@@ -67,9 +73,15 @@ macOS will ask for microphone access the first time, and until it is granted the
 stream returns silence rather than an error — which the deck reports as "nothing was
 said" rather than inventing a question.
 
-The pad is push-to-start, push-to-stop, not hold: the TTP223 drops a held touch
-after ten to fifteen seconds. A take also ends itself after 1.6 s of quiet, or at
-the ten-second cap.
+The pad is push-to-start, push-to-stop, not hold. Measured on our own TTP223: a
+held touch is dropped after **7.5 seconds**, not the ten to fifteen others report,
+and once it has let go a resting finger is indistinguishable from no finger at all
+— the recalibration folds it into the baseline and there is no signal left to read.
+So the ceiling cannot be worked around, only stepped past, and toggling does that.
+`controls.Tap` filters the chatter around a release: any edge re-arms a timer, and
+a tap counts only after a second of quiet. A take also ends itself after 1.6 s of
+quiet, or at the ten-second cap. The numbers are in
+`../hardware/parts/touch-ttp223.md`.
 
 The mode switch in Settings chooses which is asked. Nothing is chosen until the
 cards are drawn, and if the endpoint is unreachable the deck falls back to the
@@ -82,8 +94,8 @@ per panel pixel.
 Drawn from the dimensions in [docs/UI.md](../docs/UI.md): a 76 x 126 mm body, the
 panel's 47.32 x 81.12 mm of glass centred across the width with the driver board's
 96.5 mm pushed to the bottom, gears in both top corners, mic slots between them,
-the dictation pad at the bottom edge, and eight 10 mm LEDs down each side at the
-chamfer. Everything is placed in millimetres and converted at 5.92 px/mm, so the
+the dictation pad at the bottom edge, and six 10 mm LEDs down each side at the
+chamfer — twelve on the chain, in three mirrored rows. Everything is placed in millimetres and converted at 5.92 px/mm, so the
 proportions on screen are the proportions in the hand.
 
 **Portrait only.** The device is never held sideways. Everything is drawn at
