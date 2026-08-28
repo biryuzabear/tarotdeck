@@ -17,3 +17,7 @@ __pycache__/
 emulator/.venv/
 emulator/fonts/
 .mlx/
+
+decks/pixel_tarot_deck/*.psd
+decks/pixel_tarot_deck/*.gif
+decks/pixel_tarot_deck/README.txt
