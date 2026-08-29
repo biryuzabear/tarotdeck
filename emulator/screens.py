@@ -178,7 +178,8 @@ def card(name, orientation=None, index=1, total=1, plate=None, style=0, label=No
     img.paste(face, (x0, y0))
     d = _draw(img)
     d.rectangle([x0, y0, x0 + w - 1, y0 + h - 1], outline=INK, width=2)
-    _name_on_plate(d, x0, y0, w, h, label or name)
+    if not cardface.bakes_names(style):
+        _name_on_plate(d, x0, y0, w, h, label or name)
     if total > 1:
         d.text((layout.MARGIN, layout.CARD_ORIENT_Y), f"{index}/{total}", font=SMALL, fill=ORNAMENT, anchor="lm")
     return img

@@ -47,6 +47,7 @@ import zlib
 
 from PIL import Image, ImageDraw
 
+import deckart
 import gravure
 
 PAPER, FAINT, ORNAMENT, INK = 0xFF, 0xC0, 0x80, 0x00
@@ -313,20 +314,27 @@ def _border(prims, x0, y0, x1, y1, chamfer):
         prims.append(("line", a, b))
 
 
-STYLES = [("Gravure", gravure_face)]
+STYLES = [
+    ("Gravure", gravure_face, False),
+    ("Pixel", deckart.face, True),
+]
 """Card styles, in menu order.
 
-One for now. A style is a name and a function with `face`'s signature, so adding
-another is one entry here and nothing else — the settings menu, the session and the
-card screen all read this list rather than knowing any style by name.
-
-The obvious second entry is real art: a function that loads `cards/<slug>.png` off
-the device and falls back to the drawn face when a plate is missing.
+A style is a name, a function with `face`'s signature, and whether that function's
+art already carries the card's name (so `screens.py` knows not to draw one over
+it). Adding a style is one entry here and nothing else — the settings menu, the
+session and the card screen all read this list rather than knowing any style by
+name. "Pixel" falls back to nothing: a name missing from the deck raises, same as
+any other bug in a style function.
 """
 
 
 def style_names():
-    return [name for name, _ in STYLES]
+    return [name for name, _, _ in STYLES]
+
+
+def bakes_names(style):
+    return STYLES[style % len(STYLES)][2]
 
 
 def face(name, w, h, style=0, wires=True):
@@ -335,8 +343,9 @@ def face(name, w, h, style=0, wires=True):
     The wires are drawn in a grey a mono refresh erases, and the reading is a mono
     screen — so the strip of cards that stays above the text is drawn without them
     rather than with an invisible half. At strip size they would be clutter anyway.
+    Styles whose art has no wires layer (see `bakes_names`) just ignore the flag.
     """
-    _, draw = STYLES[style % len(STYLES)]
+    _, draw, _ = STYLES[style % len(STYLES)]
     return draw(name, w, h, wires)
 
 

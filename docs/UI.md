@@ -340,6 +340,24 @@ subset of what it learned rather than a shape it has never seen.
 The cog that used to sit at the centre of every plate is gone. It was identical on
 all 78 and, being the largest thing there, it was all anyone saw.
 
+## The panel has no hidden bezel — confirmed on hardware
+Tested on the physical unit: a 2 px border drawn at the exact edges of the 280x480
+frame, plus corner tick marks, pushed to the real e-paper panel. The border sits at
+the visible edge of the active area with nothing cut off underneath the bezel — the
+full 280x480 is usable. **There is no physical reason to keep a safety margin off
+the glass edge.** This matters because the cards and their art are already small
+and low on pixels, so margin spent for safety is margin the art doesn't have.
+The 16 px margin used elsewhere on this page is a design choice, not a hardware
+constraint, and can be revisited with that in mind.
+
+**Tried on hardware with the Pixel deck (decks/pixel_tarot_deck_2) and confirmed
+good:** a row of three cards, margin 0, gap 0 between cards, and no rectangle
+outline drawn around each card — just the deck art, edge to edge, full width. At
+0 margin and 0 gap each card came out 93x123 px, against 77x132 px at the old
+16 px margin. The outline was dropped because the deck's own art already reads as
+a card without it, and every pixel spent on a drawn border is a pixel the small
+art doesn't have.
+
 ## One margin, and no frame
 The reading screen had four margins — the card strip bled to the edge, the text
 frame inset 12, the text inset 10 again inside that, and the footer sat on 16 —

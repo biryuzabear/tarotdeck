@@ -1,0 +1,22 @@
+[Unit]
+Description=Tarot deck — hardware playground
+Documentation=file:///home/biryuzabear/tarotdeck/hardware/hwtest/README.md
+After=multi-user.target
+Conflicts=tarotdeck.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/biryuzabear/tarotdeck/hardware/hwtest
+Environment=SUDO_USER=biryuzabear
+ExecStartPre=/bin/sh -c 'for i in $(seq 40); do [ -e /dev/leds0 ] && [ -e /dev/spidev0.0 ] && exit 0; sleep 0.5; done; echo "no /dev/leds0 or /dev/spidev0.0 — check the overlays in config.txt"; exit 1'
+ExecStart=/usr/bin/python3 -u /home/biryuzabear/tarotdeck/hardware/hwtest/playground.py
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=3
+StartLimitIntervalSec=120
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

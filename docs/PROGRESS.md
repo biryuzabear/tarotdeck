@@ -65,3 +65,11 @@ Ordered by how much it could invalidate:
 - How the transcribed question gets confirmed
 - One lit chamfer or both
 - Gear size, which collides with where the LED column starts
+- Where the shuffle seed comes from. Right now it's plain `random.Random`
+  (`emulator/tarot.py:59`) — no real-world entropy. The touch pad only gives a
+  tap timestamp, which is too little entropy. Idea floated: hash the raw
+  microphone PCM buffer of the question (before Whisper touches it) — mic
+  self-noise and room acoustics in the low bits give real entropy, and the
+  buffer already exists for transcription. Not decided, not designed —
+  depends on whether the mic path exposes raw samples before Whisper
+  consumes them.

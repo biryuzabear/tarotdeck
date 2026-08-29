@@ -69,6 +69,26 @@ cd ~/tarotdeck/emulator && sudo python3 run_deck.py
 `run_deck.py` refuses to start anywhere but a Pi, and `run.py` is still the way in
 on a desk. Neither is a fork of the other — see `emulator/README.md` for the seam.
 
+## Starting at boot
+Two systemd units in `systemd/`, one for the deck and one for the playground, and
+only ever one enabled — they drive the same panel and the same pins, so each
+declares `Conflicts=` on the other.
+
+```
+sudo cp ~/tarotdeck/systemd/*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now tarotdeck-test.service    # or tarotdeck.service
+```
+
+**Enabled today: `tarotdeck-test.service`**, the playground — poke every part by
+hand and see it respond. Verified across a reboot: the unit comes up on its own
+about seven seconds after `multi-user.target`, with nothing logged in.
+
+`journalctl -u tarotdeck-test.service -f` is where its output goes now; there is no
+`~/playground.log` any more. Reasoning behind the unit files — the root, the
+`SUDO_USER`, the wait for the device nodes, the restart limit, `SIGINT` for a clean
+stop — is in `systemd/README.md`.
+
 ## What decides which backend
 `emulator/board.py` reads `/proc/device-tree/model` once. Everything else imports
 `IS_PI` from it, so there is exactly one guess in the tree:
